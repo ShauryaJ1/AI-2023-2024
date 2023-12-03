@@ -5,11 +5,12 @@ import time
 
 def printBoard(boardString):
    print(*[boardString[i:i+8] for i in range(0,64,8)],sep="\n")
-
+def print1DREP(boardString):
+   print(boardString,str(boardString.lower().count('x'))+ '/'+str(boardString.lower().count('o')))
 def makeMove(boardString):
    return ''
 
-def determineMoves(boardString):
+def determineMoves(boardString,tokenToPlay):
    return ''
 
 
@@ -30,6 +31,17 @@ if __name__ == '__main__':
     else:
        board = args[0]
        tokenToPlay = args[1]
+    board = board.lower()
     printBoard(board)
+    print('\n')
+    print1DREP(board)
+    print(determineMoves(board,tokenToPlay),'\n')
 
+
+'''
+testing boards:
+
+'...................x.......xx......xo...........................'
+
+'''
 #Shaurya Jain, pd 3, 2025
