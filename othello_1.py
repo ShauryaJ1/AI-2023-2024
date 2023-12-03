@@ -40,9 +40,10 @@ def determineMoves(boardString,tokenToPlay):
                break
             else:
                break
-      
+   for move in moves:
+      board_list[move] = '*'
         
-   return moves,boardUpdated
+   return moves,''.join(board_list)
 
 if __name__ == '__main__':
     if len(args)==0:
