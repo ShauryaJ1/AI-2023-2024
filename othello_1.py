@@ -31,15 +31,16 @@ def determineMoves(boardString,tokenToPlay):
          while psblIdx<64:
 
             psblIdx+=8*direction[0] + 1*direction[1]
-            if board_list[psblIdx] == opposite:
-            #    print(psblIdx, 'continue')
-               continue
-            elif(board_list[psblIdx]==tokenToPlay):
-            #    print(psblIdx,'STOP')
-               moves.append(idx)
-               break
-            else:
-               break
+            if psblIdx<64:
+                if board_list[psblIdx] == opposite:
+                #    print(psblIdx, 'continue')
+                     continue
+                elif(board_list[psblIdx]==tokenToPlay):
+                #    print(psblIdx,'STOP')
+                    moves.append(idx)
+                    break
+                else:
+                    break
    for move in moves:
       board_list[move] = '*'
         
