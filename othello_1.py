@@ -11,29 +11,38 @@ def makeMove(boardString):
    return ''
 
 def determineMoves(boardString,tokenToPlay):
-   opposite = 'x' if tokenToPlay == 'o' else 'x'
+   opposite = 'x' if tokenToPlay == 'o' else 'o'
+#    print(opposite)
    board_list = list(boardString)
    possible_indices = [i for i,itm in enumerate(board_list) if itm=='.']
+#    print(len(possible_indices))
    moves= []
    for idx in possible_indices:
       directions_to_check = []
       for direction in directions:
-            if direction[0] + idx + direction[1]*8<64 and board_list[direction[0] + idx + direction[1]*8]==opposite:
+            if direction[1] + idx + direction[0]*8<64 and board_list[direction[1] + idx + direction[0]*8]==opposite:
+            #    print(idx, direction[1] + idx + direction[0]*8)
                directions_to_check.append(direction)
+    #   if directions_to_check:
+    #      print(directions_to_check)
       for direction in directions_to_check:
          psblIdx = idx
+        #  print(direction)
          while psblIdx<64:
-            psblIdx+=8
+
+            psblIdx+=8*direction[0] + 1*direction[1]
             if board_list[psblIdx] == opposite:
+            #    print(psblIdx, 'continue')
                continue
             elif(board_list[psblIdx]==tokenToPlay):
-               moves.append(psblIdx)
+            #    print(psblIdx,'STOP')
+               moves.append(idx)
                break
             else:
                break
-               
-
-   return moves,boardString
+      
+        
+   return moves,boardUpdated
 
 if __name__ == '__main__':
     if len(args)==0:
@@ -58,7 +67,7 @@ if __name__ == '__main__':
     printBoard(boardUpdated)
     print('\n')
     print1DREP(board)
-    print(moves,'\n')
+    print(f"Possible moves for {tokenToPlay}:",*moves,'\n')
 
 '''
 testing boards:
