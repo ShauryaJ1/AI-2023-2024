@@ -7,7 +7,7 @@ import re
 def printBoard(boardString):
    print(*[boardString[i:i+8] for i in range(0,64,8)],sep="\n")
 def print1DREP(boardString):
-   boardString = removeAsterisk(boardString)
+   boardString = removeAsterisk(boardString.lower())
    print(boardString,str(boardString.lower().count('x'))+ '/'+str(boardString.lower().count('o')))
 def removeAsterisk(boardString):
     return boardString.replace('*','.')
@@ -112,7 +112,7 @@ def determineMovesAndPlay(boardString,tokenToPlay, opposite,move_idx):
     #     board_list[p_move] = '*'
       for flip in flips:
         board_list[flip] = tokenToPlay
-      board_list[move_idx] = tokenToPlay
+      board_list[move_idx] = tokenToPlay.upper()
       return ''.join(board_list)
 
 
@@ -137,7 +137,7 @@ if __name__ == '__main__':
             
             else:
                 a_moves_all_nums.append(move)
-        a_moves = [abs(int(move)) for move in a_moves_all_nums]
+        a_moves = [int(move) for move in a_moves_all_nums if int(move)>=0]
         
     
     
@@ -166,21 +166,28 @@ if __name__ == '__main__':
             print(f"Possible moves for {tokenToPlay}:",*set(f_moves),'\n')
     else:
             print("No moves possible")
+    print()
     for a_move in a_moves:
         print(f"{tokenToPlay} plays to {a_move}")
-        new_board = determineMovesAndPlay(board,tokenToPlay,opposite,a_move)
+        new_board = determineMovesAndPlay(board.lower(),tokenToPlay,opposite,a_move)
         # print(new_board)
         opposite_moves, board_2 = determineMoves(new_board,tokenToPlay=opposite)
         printBoard(board_2)
         print('\n')
         print1DREP(board_2)
         if opposite_moves:
-            print(f"Possible moves for {opposite}:",*set(opposite_moves),'\n')
+            print(f"Possible moves for {opposite}:",*set(opposite_moves))
         else:
-            print("No moves possible")
+            print(f"No moves possible for {opposite}")
+            moves_2,board_2 = determineMoves(new_board,tokenToPlay)
+            if moves_2:
+                print(f"Possible moves for {tokenToPlay}",*set(moves_2))
+            else:
+                print(f"No moves possible for {tokenToPlay}\nGame Over")
         tokenToPlay = opposite
         opposite = 'x' if tokenToPlay == 'o' else 'o'
         board = removeAsterisk(board_2)
+        print()
         
 
     # else:
