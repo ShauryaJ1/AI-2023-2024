@@ -129,7 +129,7 @@ if __name__ == '__main__':
         a_moves_all_nums = []
         for move in a_moves:
             if any(c.isalpha() for c in move):
-                a_moves_all_nums.append((ord(move[0])-97)*8+int(move[1])-1)
+                a_moves_all_nums.append(ord(move[0])-97+8*(int(move[1])-1))
             
             else:
                 a_moves_all_nums.append(move)
@@ -151,7 +151,8 @@ if __name__ == '__main__':
     if not board:
         board = '.'*27 + 'OX......XO' + '.'*27
     directions = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (-1, -1), (1, -1), (-1, 1)]
-    # print(board,a_moves,tokenToPlay)
+    print(board,a_moves,tokenToPlay)
+
     if a_moves:
         board = board.lower()
         f_moves,boardUpdated = determineMoves(board,tokenToPlay)
