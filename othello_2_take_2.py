@@ -121,7 +121,7 @@ if __name__ == '__main__':
     args_joined = ' ' +' '.join(args) + ' '
     if(t:=re.search("\s[xo]\s",args_joined)):
         tokenToPlay = t.group()[1]
-    if (b:= re.search("[x.o]{64}",' '.join(args))):
+    if (b:= re.search("[OXx.o]{64}",' '.join(args))):
        board = b.group().lower()
        
     if(m:= re.findall("([a-h][1-8])|([^a-z][0-9]{1,2})",' '.join(args))):
@@ -129,6 +129,7 @@ if __name__ == '__main__':
         a_moves_all_nums = []
         for move in a_moves:
             if any(c.isalpha() for c in move):
+                # print(ord(move[0])-97+8*(int(move[1]))-1)
                 a_moves_all_nums.append(ord(move[0])-97+8*(int(move[1])-1))
             
             else:
@@ -151,7 +152,7 @@ if __name__ == '__main__':
     if not board:
         board = '.'*27 + 'OX......XO' + '.'*27
     directions = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (-1, -1), (1, -1), (-1, 1)]
-    print(board,a_moves,tokenToPlay)
+    # print(board,a_moves,tokenToPlay)
 
     if a_moves:
         board = board.lower()
