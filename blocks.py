@@ -141,7 +141,14 @@ if __name__ == '__main__':
         #       print('No Solution')
         print(f"Time: {time.time()-start_time:.3g}s")
 
-    
+'''
+
+placeBlock
+setGlobals
+bruteForce
+
+
+'''
 
 
 
