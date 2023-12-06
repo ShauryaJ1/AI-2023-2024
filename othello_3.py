@@ -122,7 +122,7 @@ if __name__ == '__main__':
     board = ''
     tokenToPlay = ''
     args_joined = ' ' +' '.join(args) + ' '
-    if(t:=re.search("\s[xo]\s",args_joined)):
+    if(t:=re.search("\s[xoXO)]\s",args_joined)):
         tokenToPlay = t.group()[1]
     if (b:= re.search("[OXx.o]{64}",' '.join(args))):
        board = b.group().lower()
@@ -165,7 +165,9 @@ if __name__ == '__main__':
     if f_moves:
             print(f"Possible moves for {tokenToPlay}:",*set(f_moves),'\n')
     else:
-            print("No moves possible")
+            print(f"No moves possible for {tokenToPlay}")
+            tokenToPlay = opposite
+            opposite = 'x' if tokenToPlay == 'o' else 'o'
     print()
     for a_move in a_moves:
         print(f"{tokenToPlay} plays to {a_move}")
@@ -177,15 +179,18 @@ if __name__ == '__main__':
         print1DREP(board_2)
         if opposite_moves:
             print(f"Possible moves for {opposite}:",*set(opposite_moves))
+            tokenToPlay = opposite
+            opposite = 'x' if tokenToPlay == 'o' else 'o'
         else:
             print(f"No moves possible for {opposite}")
             moves_2,board_2 = determineMoves(new_board,tokenToPlay)
             if moves_2:
                 print(f"Possible moves for {tokenToPlay}",*set(moves_2))
+
             else:
                 print(f"No moves possible for {tokenToPlay}\nGame Over")
-        tokenToPlay = opposite
-        opposite = 'x' if tokenToPlay == 'o' else 'o'
+        # tokenToPlay = opposite
+        # opposite = 'x' if tokenToPlay == 'o' else 'o'
         board = removeAsterisk(board_2)
         print()
         
