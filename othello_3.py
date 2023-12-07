@@ -172,8 +172,10 @@ if __name__ == '__main__':
     for a_move in a_moves:
         print(f"{tokenToPlay} plays to {a_move}")
         new_board = determineMovesAndPlay(board.lower(),tokenToPlay,opposite,a_move)
+        print(new_board)
         # print(new_board)
         opposite_moves, board_2 = determineMoves(new_board,tokenToPlay=opposite)
+        # print(opposite_moves)
         printBoard(board_2)
         print('\n')
         print1DREP(board_2)
