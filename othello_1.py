@@ -2,7 +2,7 @@ import sys; args = sys.argv[1:]
 import math
 import time 
 
-
+import time
 def printBoard(boardString):
    print(*[boardString[i:i+8] for i in range(0,64,8)],sep="\n")
 def print1DREP(boardString):
@@ -61,6 +61,7 @@ def determineMoves(boardString,tokenToPlay):
    return moves,''.join(board_list)
 
 if __name__ == '__main__':
+    start_time = time.time()
     if len(args)==0:
       board = '.'*27 + 'OX......XO' + '.'*27
       tokenToPlay = 'x'
@@ -87,7 +88,7 @@ if __name__ == '__main__':
         print(f"Possible moves for {tokenToPlay}:",*set(moves),'\n')
     else:
        print("No moves possible")
-
+    print(f"Time: {time.time()-start_time:.3g}s")
 '''
 testing boards:
 
