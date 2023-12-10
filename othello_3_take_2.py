@@ -40,7 +40,7 @@ def determineMoves(boardString,tokenToPlay):
             prevIdx = psblIdx
             psblIdx+=8*direction[0] + 1*direction[1]
             # print(psblIdx,prevIdx, abs(prevIdx%8-psblIdx%8))
-            if psblIdx>0 and psblIdx<64 and abs(prevIdx%8-psblIdx%8)<=1:
+            if psblIdx>=0 and psblIdx<64 and abs(prevIdx%8-psblIdx%8)<=1:
                 # print('uo')
                    
                 if board_list[psblIdx] == opposite:
@@ -198,7 +198,7 @@ if __name__ == '__main__':
     #             print(f"No moves possible for {tokenToPlay}\nGame Over")
     print(a_moves)
     for a_move in a_moves:
-        
+        start_time = time.time()
         print(f"{tokenToPlay} plays to {a_move}")
         new_board = determineMovesAndPlay(board,tokenToPlay,opposite,a_move)
         opposite_moves, board_2 = determineMoves(new_board,tokenToPlay=opposite)
@@ -220,7 +220,7 @@ if __name__ == '__main__':
                 print(f"No moves possible for {tokenToPlay}\nGameOver")
 
             
-        
+        print(f"Time: {time.time()-start_time:.3g}s")
 
         
 

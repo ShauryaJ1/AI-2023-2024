@@ -40,7 +40,7 @@ def determineMoves(boardString,tokenToPlay):
             prevIdx = psblIdx
             psblIdx+=8*direction[0] + 1*direction[1]
             # print(psblIdx,prevIdx, abs(prevIdx%8-psblIdx%8))
-            if psblIdx>0 and psblIdx<64 and abs(prevIdx%8-psblIdx%8)<=1:
+            if psblIdx>=0 and psblIdx<64 and abs(prevIdx%8-psblIdx%8)<=1:
                 # print('uo')
                    
                 if board_list[psblIdx] == opposite:
@@ -86,7 +86,7 @@ def determineMovesAndPlay(boardString,tokenToPlay, opposite,move_idx):
             prevIdx = psblIdx
             psblIdx+=8*direction[0] + 1*direction[1]
             # print(psblIdx,prevIdx, abs(prevIdx%8-psblIdx%8))
-            if psblIdx>0 and psblIdx<64 and abs(prevIdx%8-psblIdx%8)<=1:
+            if psblIdx>=0 and psblIdx<64 and abs(prevIdx%8-psblIdx%8)<=1:
                 # print('uo')
                    
                 if board_list[psblIdx] == opposite:
@@ -118,6 +118,7 @@ def determineMovesAndPlay(boardString,tokenToPlay, opposite,move_idx):
 
 
 if __name__ == '__main__':
+    start_time = time.time()
     a_moves = []
     board = ''
     tokenToPlay = ''
@@ -170,6 +171,7 @@ if __name__ == '__main__':
             opposite = 'x' if tokenToPlay == 'o' else 'o'
     print()
     for a_move in a_moves:
+        
         print(f"{tokenToPlay} plays to {a_move}")
         new_board = determineMovesAndPlay(board.lower(),tokenToPlay,opposite,a_move)
         print(new_board)
@@ -195,7 +197,7 @@ if __name__ == '__main__':
         # opposite = 'x' if tokenToPlay == 'o' else 'o'
         board = removeAsterisk(board_2)
         print()
-        
+    print(f"Time: {time.time()-start_time:.3g}s\n{len(a_moves)}\n{(time.time()-start_time)/len(a_moves)}")
 
     # else:
 
