@@ -2,37 +2,35 @@ import re
 import sys; args = sys.argv[1:]
 
 if __name__ == '__main__':
-    # args_joined = ' ' +' '.join(args) + ' '
-    # # print(args_joined)
-    # if(t:=re.search("\s[xo]\s",args_joined,re.I)):
-    #     print(t.group()[1])
-    
-    # if (b:= re.search("[x.o]{64}",' '.join(args))):
-    #    board = b.group().lower()
-    #    print(board)
-    # if(m:= re.findall("([a-h][1-8])|([^a-z][0-9]{1,2})",' '.join(args))):
-    #     moves = [(itm1 + itm2).replace(" ",'') for itm1,itm2 in m] 
-    #     print(moves)
-    moves = []
+    moves_to_return = []
+    a_moves = []
     board = ''
     tokenToPlay = ''
     args_joined = ' ' +' '.join(args) + ' '
-    if(t:=re.search("\s[xo]\s",args_joined,re.I)):
+    if(t:=re.search("\s[xoXO)]\s",args_joined)):
         tokenToPlay = t.group()[1]
-    if (b:= re.search("[x.o]{64}",' '.join(args))):
+    if (b:= re.search("[OXx.o]{64}",' '.join(args))):
        board = b.group().lower()
        
-    if(m:= re.findall("([a-h][1-8])|([^a-z][0-9]{1,2})",' '.join(args))):
-        moves = [(itm1 + itm2).replace(" ",'').lower() for itm1,itm2 in m]
-        moves_all_nums = []
-        for move in moves:
-            if any(c.isalpha() for c in move):
-                moves_all_nums.append((ord(move[0])-97)*8+int(move[1])-1)
-            
-            else:
-                moves_all_nums.append(move)
-        moves = [abs(int(move)) for move in moves_all_nums]
-        
+    for arg in args:
+        if 'x' not in arg.lower() and 'o' not in arg.lower():
+            a_moves.append(arg)
+    for a_move in a_moves:
+        if len(a_move)<=2:
+            if a_move[0] in ['A','B','C','D','E','F','G','H']:
+                moves_to_return.append(ord(a_move[0])-65+8*(int(a_move[1])-1))
+            elif a_move[0] == '_':
+                moves_to_return.append(int(a_move[1]))
+            elif(64>int(a_move)>=0):
+                moves_to_return.append(int(a_move))
+        else:
+            splits = [a_move[i:i+2] for i in range(0,len(a_move),2)]
+            for split in splits:
+                
+                if split[0] == '_':
+                    moves_to_return.append(int(split[1]))
+                elif(64>int(split)>=0):
+                    moves_to_return.append(int(split))
     
     
     if not tokenToPlay:
@@ -45,8 +43,10 @@ if __name__ == '__main__':
                 tokenToPlay = 'x'
             else:
                 tokenToPlay = 'o'
-
+    
     if not board:
         board = '.'*27 + 'OX......XO' + '.'*27
-
+    
+    board = board.lower()
+    print(board,tokenToPlay,moves_to_return)
 #Shaurya Jain, pd 3, 2025

@@ -2,8 +2,43 @@ import sys; args = sys.argv[1:]
 import math
 import time 
 import re
+global directions
+global board
+global tokenToPlay
+global corners
+global next_to_corners
+global edges
+corners = {0,7,63,56}
+next_to_corners = {0:[1,8,9],7:[15,6,14],63:[62,55,54],56:[57,48,49]}
+directions = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (-1, -1), (1, -1), (-1, 1)]
+edges = [[0,1,2,3,4,5,6,7],[56,57,58,59,60,61,62,63],[0,8,16,24,32,40,48,56],[7,15,23,31,39,47,55,63]]
+edge_lists = {idx:edge for edge in edges for idx in edge if idx not in corners}
 
 
+def quickMove(brd,tkn):
+    '''
+    Implementing move to empty corners
+    Implementing don't move around enemy or empty corners
+    Implement move to safe edges
+    
+    '''
+    p_moves,_ = determineMoves(brd,tkn)
+    
+    if p_moves:
+        for move in p_moves:
+            if move in corners:
+                return move
+        opposite = 'x' if tkn == 'o' else 'o'
+        opps = []
+        for corner in corners:
+            if brd[corner]==opposite or brd[corner]=='.':
+                opps+=next_to_corners[corner]
+        if (s:=p_moves-p_moves.intersection(set(opps))):
+            return [*s][-1]
+
+        return [*p_moves][-1]
+    else: return ''
+    # return [*p_moves][0]
 def printBoard(boardString):
    print(*[boardString[i:i+8] for i in range(0,64,8)],sep="\n")
 def print1DREP(boardString):
@@ -40,7 +75,7 @@ def determineMoves(boardString,tokenToPlay):
             prevIdx = psblIdx
             psblIdx+=8*direction[0] + 1*direction[1]
             # print(psblIdx,prevIdx, abs(prevIdx%8-psblIdx%8))
-            if psblIdx>0 and psblIdx<64 and abs(prevIdx%8-psblIdx%8)<=1:
+            if psblIdx>=0 and psblIdx<64 and abs(prevIdx%8-psblIdx%8)<=1:
                 # print('uo')
                    
                 if board_list[psblIdx] == opposite:
@@ -63,7 +98,7 @@ def determineMoves(boardString,tokenToPlay):
    for move in moves:
       board_list[move] = '*'
         
-   return moves,''.join(board_list)
+   return set(moves),''.join(board_list)
 
 def determineMovesAndPlay(boardString,tokenToPlay, opposite,move_idx):
       possible_moves = []
@@ -117,8 +152,9 @@ def determineMovesAndPlay(boardString,tokenToPlay, opposite,move_idx):
 
 
 
-if __name__ == '__main__':
-    start_time = time.time()
+def main():
+    # args = ['442919102113_12618_237_0172416_81415_3_4_720_5_611222532_934123847304223333945404143504654495351564859526055316162']
+    moves_to_return = []
     a_moves = []
     board = ''
     tokenToPlay = ''
@@ -128,18 +164,25 @@ if __name__ == '__main__':
     if (b:= re.search("[OXx.o]{64}",' '.join(args))):
        board = b.group().lower()
        
-    if(m:= re.findall("([a-h][1-8])|([^a-z][0-9]{1,2})",' '.join(args))):
-        a_moves = [(itm1 + itm2).replace(" ",'').lower() for itm1,itm2 in m]
-        a_moves_all_nums = []
-        for move in a_moves:
-            if any(c.isalpha() for c in move):
-                # print(ord(move[0])-97+8*(int(move[1]))-1)
-                a_moves_all_nums.append(ord(move[0])-97+8*(int(move[1])-1))
-            
-            else:
-                a_moves_all_nums.append(move)
-        a_moves = [int(move) for move in a_moves_all_nums if int(move)>=0]
-        
+    for arg in args:
+        if 'x' not in arg.lower() and 'o' not in arg.lower():
+            a_moves.append(arg)
+    for a_move in a_moves:
+        if len(a_move)<=2:
+            if a_move[0] in ['A','B','C','D','E','F','G','H']:
+                moves_to_return.append(ord(a_move[0])-65+8*(int(a_move[1])-1))
+            elif a_move[0] == '_':
+                moves_to_return.append(int(a_move[1]))
+            elif(64>int(a_move)>=0):
+                moves_to_return.append(int(a_move))
+        else:
+            splits = [a_move[i:i+2] for i in range(0,len(a_move),2)]
+            for split in splits:
+                
+                if split[0] == '_':
+                    moves_to_return.append(int(split[1]))
+                elif(64>int(split)>=0):
+                    moves_to_return.append(int(split))
     
     
     if not tokenToPlay:
@@ -155,14 +198,7 @@ if __name__ == '__main__':
     
     if not board:
         board = '.'*27 + 'OX......XO' + '.'*27
-    # tokenToPlay = 'x'
-    # tokenToPlay = 'o'
-    # board = '.'*27 + 'OX......XO' + '.'*27
-    # board = 'oooo.oooxooooooo.xooooooooxxooooooxxxoxxoooxoxx.oooooxx.ooooo...'
-    # a_moves = [37, 45, 44, 43, 51, 21, 46, 59, 26, 42, 20, 19, 10, 18, 49, 56, 34, 29, 9, 2, 14, 7, 22, 15, 13, 6, 41, 48, 1, 0, 12, 5 ,58, 57, 11 ,3 ,33 ,40 ,25 ,50 ,52 ,60 ,23 ,31 ,32 ,24 ,53 ,38 ,54 ,17 ,39 ,30 ,8 ,16 ,4 ,63 ,55 ,47 ,61 ,62]
-    # a_moves =[16]
-    directions = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (-1, -1), (1, -1), (-1, 1)]
-    # print(board,a_moves,tokenToPlay)
+    
     board = board.lower()
     f_moves,boardUpdated = determineMoves(board,tokenToPlay)
     printBoard(boardUpdated)
@@ -173,32 +209,17 @@ if __name__ == '__main__':
             print(f"Possible moves for {tokenToPlay}:",*set(f_moves),'\n')
     else:
             print(f"No moves possible for {tokenToPlay}",'\n')
+            f_moves,boardUpdated  = determineMoves(board,opposite)
+            print(f"Possible moves for {opposite}:",*set(f_moves),'\n')
             tokenToPlay = opposite
             opposite = 'x' if tokenToPlay == 'o' else 'o'
+
+
     
     
-    # for a_move in a_moves:
-    #     board = determineMovesAndPlay(board.lower(),tokenToPlay,opposite,a_move)
-    #     moves,board = determineMoves(board,opposite)
-    #     print(f"{tokenToPlay} plays to {a_move}")
-    #     printBoard(board)
-    #     print('\n')
-    #     print1DREP(board)
-    #     if moves:
-    #         print(f"Possible moves for {opposite}:",*set(moves),'\n')
-    #         tokenToPlay = opposite
-    #         opposite =  'x' if tokenToPlay == 'o' else 'o'
-    #         board = removeAsterisk(board)
-    #     else:
-    #         print(f"No moves possible for {opposite}",'\n')
-    #         moves,board = determineMoves(board,tokenToPlay)
-    #         board = removeAsterisk(board)
-    #         if moves:
-    #             print(f"Possible moves for {tokenToPlay}:",*set(moves),'\n')
-    #         else:
-    #             print(f"No moves possible for {tokenToPlay}\nGame Over")
-    print(a_moves)
-    for a_move in a_moves:
+   
+    # print(a_moves)
+    for a_move in moves_to_return:
         
         print(f"{tokenToPlay} plays to {a_move}")
         new_board = determineMovesAndPlay(board,tokenToPlay,opposite,a_move)
@@ -219,12 +240,11 @@ if __name__ == '__main__':
                 board = removeAsterisk(board_2.lower())
             else:
                 print(f"No moves possible for {tokenToPlay}\nGameOver")
-
     
-        
+    
+if __name__ == '__main__':
+    main()
 
         
-
-#Shaurya Jain, pd 3, 2025
 
 #Shaurya Jain, pd 3, 2025
