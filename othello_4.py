@@ -8,19 +8,39 @@ global tokenToPlay
 global corners
 global next_to_corners
 global edges
+global edge_lists
 corners = {0,7,63,56}
 next_to_corners = {0:[1,8,9],7:[15,6,14],63:[62,55,54],56:[57,48,49]}
 directions = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (-1, -1), (1, -1), (-1, 1)]
 edges = [[0,1,2,3,4,5,6,7],[56,57,58,59,60,61,62,63],[0,8,16,24,32,40,48,56],[7,15,23,31,39,47,55,63]]
+
 edge_lists = {idx:edge for edge in edges for idx in edge if idx not in corners}
 
+# print(edge_lists)
+def checkEdge(brd,tkn,move):
+    move_idx = edge_lists[move].index(move)
+    # print(move_idx)
+    slice_1 = ''.join(brd[idx] for idx in edge_lists[move][:move_idx])
+    slice_2 = ''.join(brd[idx] for idx in edge_lists[move][move_idx+1:])
+    if slice_1 == len(slice_1)*tkn or slice_2 ==len(slice_2)*tkn:
+        return True
+    return False
+def mobility(brd,tkn,p_moves):
+    opposite = 'x' if tkn == 'o' else 'o'
+    lens = []
+    for move in p_moves:
+        p_brd = determineMovesAndPlay(brd,tkn,opposite,move)
+        o_moves,_ = determineMoves(p_brd,opposite)
+        lens.append((len(o_moves),move))
+    return min(lens)[1]
+# printBoard('...ooo.x..oxxxx.xxoxxoooxxoxxoooxoxxoxxoooooooxo..xxoxxx..x.ooxx')
 
 def quickMove(brd,tkn):
     '''
     Implementing move to empty corners
     Implementing don't move around enemy or empty corners
-    Implement move to safe edges
-    
+    Implementing move to safe edges
+    Implementing mobility
     '''
     p_moves,_ = determineMoves(brd,tkn)
     
@@ -33,14 +53,24 @@ def quickMove(brd,tkn):
         for corner in corners:
             if brd[corner]==opposite or brd[corner]=='.':
                 opps+=next_to_corners[corner]
+        
         if (s:=p_moves-p_moves.intersection(set(opps))):
-            return [*s][-1]
+            p_moves = s
+        for move in p_moves:
+            if move in edge_lists:
+                if checkEdge(brd,tkn,move):
+                    return move
+        
+        
 
-        return [*p_moves][-1]
+        return mobility(brd,tkn,p_moves)
     else: return ''
     # return [*p_moves][0]
 def printBoard(boardString):
    print(*[boardString[i:i+8] for i in range(0,64,8)],sep="\n")
+
+# printBoard('...ooo.x..oxxxx.xxoxxoooxxoxxoooxoxxoxxoooooooxo..xxoxxx..x.ooxx')
+
 def print1DREP(boardString):
    boardString = removeAsterisk(boardString.lower())
    print(boardString,str(boardString.lower().count('x'))+ '/'+str(boardString.lower().count('o')))
@@ -244,6 +274,7 @@ def main():
     
 if __name__ == '__main__':
     main()
+    # print(mobility('.'*27 + 'OX......XO' + '.'*27,'x',{26,19,44,37}))
 
         
 
