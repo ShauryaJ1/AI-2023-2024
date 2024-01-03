@@ -182,8 +182,24 @@ def determineMovesAndPlay(boardString,tokenToPlay, opposite,move_idx):
       board_list[move_idx] = tokenToPlay.upper()
       return ''.join(board_list)
 
-
-
+def negamax(brd,tkn):
+    eTkn = 'x' if tkn == 'o' else 'o'
+    if brd.count('.')==0:
+        return [brd.count(tkn)-brd.count(eTkn)]
+    bestSoFar = [-65]
+    p_moves,_ = determineMoves(brd,tkn)
+    if len(p_moves)==0:
+        if len(determineMoves(brd,eTkn)[0])==0:
+            return [brd.count(tkn)-brd.count(eTkn)]
+        nm = negamax(brd,eTkn)
+        bestSoFar = [-nm[0]] + nm[1:] + [-1]
+    for mv in p_moves:
+        newBrd = determineMovesAndPlay(brd,tkn,eTkn,mv)
+        nm = negamax(newBrd,eTkn)
+        if -nm[0]>bestSoFar[0]:
+            bestSoFar = [-nm[0]] + nm[1:] + [mv]
+        
+    return bestSoFar
 def main():
     # args = ['442919102113_12618_237_0172416_81415_3_4_720_5_611222532_934123847304223333945404143504654495351564859526055316162']
     moves_to_return = []
@@ -230,7 +246,8 @@ def main():
     
     if not board:
         board = '.'*27 + 'OX......XO' + '.'*27
-    
+    BRD = board
+    TKN = tokenToPlay
     board = board.lower()
     f_moves,boardUpdated = determineMoves(board,tokenToPlay)
     printBoard(boardUpdated)
@@ -245,7 +262,6 @@ def main():
             print(f"Possible moves for {opposite}:",*set(f_moves),'\n')
             tokenToPlay = opposite
             opposite = 'x' if tokenToPlay == 'o' else 'o'
-
 
     
     
@@ -272,8 +288,12 @@ def main():
                 board = removeAsterisk(board_2.lower())
             else:
                 print(f"No moves possible for {tokenToPlay}\nGameOver")
-    
-    
+   
+    if len(determineMoves(BRD,TKN)[0])<=10:
+        neg = negamax(BRD,TKN)
+        min_score,moves_seq = neg[0],neg[1:]
+        print(f"My move is {moves_seq[-1]}")
+        print(f"Min score: {min_score}; move sequence: {moves_seq}")
 if __name__ == '__main__':
     main()
     # print(mobility('.'*27 + 'OX......XO' + '.'*27,'x',{26,19,44,37}))
