@@ -9,6 +9,8 @@ global corners
 global next_to_corners
 global edges
 global edge_lists
+global cache
+cache = {}
 corners = {0,7,63,56}
 next_to_corners = {0:[1,8,9],7:[15,6,14],63:[62,55,54],56:[57,48,49]}
 directions = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (-1, -1), (1, -1), (-1, 1)]
@@ -181,7 +183,59 @@ def determineMovesAndPlay(boardString,tokenToPlay, opposite,move_idx):
         board_list[flip] = tokenToPlay
       board_list[move_idx] = tokenToPlay.upper()
       return ''.join(board_list)
+# def negamax_cache(brd,tkn):
+#     eTkn = 'x' if tkn == 'o' else 'o'
+#     if brd.count('.')==0:
+#         key = (brd, tkn)
+#         cache[key] = [brd.count(tkn)-brd.count(eTkn)]
 
+#         return cache[key]
+    
+#     p_moves,_ = determineMoves(brd,tkn)
+#     if len(p_moves)==0:
+#         if len(determineMoves(brd,eTkn)[0])==0:
+#             return [brd.count(tkn)-brd.count(eTkn)]
+#         nm = negamax(brd,eTkn)
+#         bestSoFar = [-nm[0]] + nm[1:] + [-1]
+#         return bestSoFar
+#     key = (brd, tkn)
+#     if key in cache:
+#         print("*", end='', flush=True)
+#         return cache[key]
+    
+#     bestSoFar = [-65]
+#     for mv in p_moves:
+#         newBrd = determineMovesAndPlay(brd,tkn,eTkn,mv).lower()
+#         nm = negamax(newBrd,eTkn)
+#         if -nm[0]>bestSoFar[0]:
+#             bestSoFar = [-nm[0]] + nm[1:] + [mv]
+#     cache[key] = bestSoFar
+#     return bestSoFar
+def negamax_with_cache(brd,tkn):
+    key = (brd,tkn)
+    if key in cache: 
+        return cache[key]
+    eTkn = 'x' if tkn == 'o' else 'o'
+    if brd.count('.')==0:
+        return [brd.count(tkn)-brd.count(eTkn)]
+    
+    p_moves,_ = determineMoves(brd,tkn)
+    if len(p_moves)==0:
+        if len(determineMoves(brd,eTkn)[0])==0:
+            return[brd.count(tkn)-brd.count(eTkn)]
+        nm = negamax_with_cache(brd,eTkn)
+        
+        cache[key] = [-nm[0]] + nm[1:] + [-1]
+        return cache[key]
+    
+    bestSoFar = [-65]
+    for mv in p_moves:
+        newBrd = determineMovesAndPlay(brd,tkn,eTkn,mv).lower()
+        nm = negamax_with_cache(newBrd,eTkn)
+        if -nm[0]>bestSoFar[0]:
+            bestSoFar = [-nm[0]] + nm[1:] + [mv]
+            cache[key] = bestSoFar
+    return cache[key]
 def negamax(brd,tkn):
     eTkn = 'x' if tkn == 'o' else 'o'
     if brd.count('.')==0:
@@ -292,10 +346,12 @@ def main():
                 print(f"No moves possible for {tokenToPlay}\nGameOver")
    
     if len(determineMoves(BRD,TKN)[0])<=10:
-        neg = negamax(BRD,TKN)
+        neg = negamax_with_cache(BRD,TKN)
         min_score,moves_seq = neg[0],neg[1:]
         print(f"My move is {moves_seq[-1]}")
         print(f"Min score: {min_score}; move sequence: {moves_seq}")
+        # print(hits)
+
 if __name__ == '__main__':
     main()
     # print(mobility('.'*27 + 'OX......XO' + '.'*27,'x',{26,19,44,37}))
