@@ -197,7 +197,7 @@ if __name__ == '__main__':
         # opposite = 'x' if tokenToPlay == 'o' else 'o'
         board = removeAsterisk(board_2)
         print()
-    print(f"Time: {time.time()-start_time:.3g}s\n{len(a_moves)}\n{(time.time()-start_time)/len(a_moves)}")
+    # print(f"Time: {time.time()-start_time:.3g}s\n{len(a_moves)}\n{(time.time()-start_time)/len(a_moves)}")
 
     # else:
 
