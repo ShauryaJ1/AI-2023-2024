@@ -10,8 +10,9 @@ global next_to_corners
 global edges
 global edge_lists
 global cache
-global holeLimit
+global HLLIM
 cache = {}
+HLLIM = 0
 corners = {0,7,63,56}
 next_to_corners = {0:[1,8,9],7:[15,6,14],63:[62,55,54],56:[57,48,49]}
 directions = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (-1, -1), (1, -1), (-1, 1)]
@@ -38,7 +39,7 @@ def mobility(brd,tkn,p_moves):
     return min(lens)[1]
 # printBoard('...ooo.x..oxxxx.xxoxxoooxxoxxoooxoxxoxxoooooooxo..xxoxxx..x.ooxx')
 
-def quickMove(brd,tkn):
+def ruleOfThumb(brd,tkn):
     '''
     Implementing move to empty corners
     Implementing don't move around enemy or empty corners
@@ -258,6 +259,44 @@ def negamax(brd,tkn):
             bestSoFar = [-nm[0]] + nm[1:] + [mv]
         
     return bestSoFar
+def quickMove(brd,tkn):
+    if not brd: global HLLIM; HLLIM=tkn; return
+
+    if brd.count('.')<=HLLIM:
+        return alphabeta(brd,tkn,-65,65)[-1]
+    return ruleOfThumb(brd,tkn)
+    # if brd.count('.')<=HLLIM:
+    #         ab_res = alphabeta(brd.lower(),tkn,-65,65)
+    #         min_score,moves_seq = ab_res[0],ab_res[1:]
+    #         print(f"My move is {moves_seq[-1]}")
+    #         print(f"Min score: {min_score}; move sequence: {moves_seq}")
+    # else:
+    #     print(ruleOfThumb(brd,tkn))
+
+def alphabeta(brd,tkn,lowerBnd,upperBnd):
+    eTkn = 'x' if tkn=='o' else 'o'
+    p_moves = determineMoves(brd,tkn)[0]
+    if not p_moves:
+        if not determineMoves(brd,eTkn)[0]:
+            return [brd.count(tkn) -brd.count(eTkn)]
+        ab = alphabeta(brd,eTkn,-upperBnd,-lowerBnd)
+        return [-ab[0]] + ab[1:] + [-1]
+    bestSoFar = [lowerBnd-1]
+    corners_in_moves = []
+    for corner in corners:
+        if corner in p_moves:
+            corners_in_moves.append(corner)
+    for corner in corners_in_moves:
+        p_moves.remove(corner)
+    p_moves = corners_in_moves+list(p_moves)
+    for mv in p_moves:
+        ab = alphabeta(determineMovesAndPlay(brd,tkn,eTkn,mv).lower(),eTkn,-upperBnd,-lowerBnd)
+        score = -ab[0]
+        if score<lowerBnd:continue
+        if score>upperBnd: return [score]
+        bestSoFar = [score] + ab[1:] + [mv]
+        lowerBnd = score+ 1
+    return bestSoFar
 def main():
     # args = ['442919102113_12618_237_0172416_81415_3_4_720_5_611222532_934123847304223333945404143504654495351564859526055316162']
     moves_to_return = []
@@ -266,7 +305,7 @@ def main():
     tokenToPlay = ''
     args_joined = ' ' +' '.join(args) + ' '
     verbose = False
-    holeLimit = ''
+    HLLIM = 10
     if(t:=re.search("\s[xoXO)]\s",args_joined)):
         tokenToPlay = t.group()[1]
     if (b:= re.search("[OXx.o]{64}",' '.join(args))):
@@ -276,9 +315,9 @@ def main():
     if(v:= re.search('V',args_joined)):
         verbose=True
     for arg in args:
-        if 'HL' in arg:
-            holeLimit = int(arg[2:])
-            # print(holeLimit)
+        if arg.startswith('HL'):
+            HLLIM = int(arg[2:])
+            # print(HLLIM)
     for arg in args:
 
         if 'x' not in arg.lower() and 'o' not in arg.lower() and 'hl' not in arg.lower() and 'v' not in arg.lower():
@@ -319,15 +358,19 @@ def main():
     TKN = tokenToPlay
     board = board.lower()
     f_moves,boardUpdated = determineMoves(board,tokenToPlay)
-    printBoard(boardUpdated)
-    print('\n')
-    print1DREP(board)
     opposite = 'x' if tokenToPlay == 'o' else 'o'
     if f_moves:
+            printBoard(boardUpdated)
+            print('\n')
+            print1DREP(board)
+            opposite = 'x' if tokenToPlay == 'o' else 'o'
             print(f"Possible moves for {tokenToPlay}:",' '.join(str(i) for i in f_moves),'\n')
     else:
-            print(f"No moves possible for {tokenToPlay}",'\n')
+            # print(f"No moves possible for {tokenToPlay}",'\n')
             f_moves,boardUpdated  = determineMoves(board,opposite)
+            printBoard(boardUpdated)
+            print('\n')
+            print1DREP(board)
             print(f"Possible moves for {opposite}:",' '.join(str(i) for i in f_moves),'\n')
             tokenToPlay = opposite
             opposite = 'x' if tokenToPlay == 'o' else 'o'
@@ -350,7 +393,7 @@ def main():
                     opposite = 'x' if tokenToPlay == 'o' else 'o'
                     board = removeAsterisk(board_2.lower())
                 else:
-                    print(f"No moves possible for {opposite}")
+                    # print(f"No moves possible for {opposite}")
                     moves, board_2 = determineMoves(removeAsterisk(board_2.lower()),tokenToPlay)
                     if moves:
                         print(f"Possible moves for {tokenToPlay}:", ' '.join(str(i) for i in moves))
@@ -373,7 +416,7 @@ def main():
                     opposite = 'x' if tokenToPlay == 'o' else 'o'
                     board = removeAsterisk(board_2.lower())
                 else:
-                    print_string+=f"No moves possible for {opposite}"
+                    # print_string+=f"No moves possible for {opposite}"
                     moves, board_2 = determineMoves(removeAsterisk(board_2.lower()),tokenToPlay)
                     if moves:
                         print_string+=f"Possible moves for {tokenToPlay}:"+' '.join(str(i) for i in moves)
@@ -395,14 +438,16 @@ def main():
         #     min_score,moves_seq = neg[0],neg[1:]
         #     print(f"My move is {moves_seq[-1]}")
         #     print(f"Min score: {min_score}; move sequence: {moves_seq}")
-        #     # print(hits)
-    print("My preferred move is ",quickMove(board, tokenToPlay))
-    if holeLimit:
-        if board.count('.')<=holeLimit:
-            neg = negamax_with_cache(board,tokenToPlay)
-            min_score,moves_seq = neg[0],neg[1:]
-            print(f"My move is {moves_seq[-1]}")
+        #     # print(hits)c
+    if board.lower().count('.')<=HLLIM:
+            ab_res = alphabeta(board.lower(),tokenToPlay,-65,65)
+            min_score,moves_seq = ab_res[0],ab_res[1:]
+            print(f"My preferred move is {moves_seq[-1]}")
             print(f"Min score: {min_score}; move sequence: {moves_seq}")
+            # print(hits)c
+    else:
+        print("My preferred move is ", quickMove(board.lower(),tokenToPlay))
+
 
 if __name__ == '__main__':
     main()
