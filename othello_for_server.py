@@ -1,6 +1,4 @@
 import sys; args = sys.argv[1:]
-import math
-import time 
 import re
 global directions
 global board
@@ -19,8 +17,10 @@ directions = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (-1, -1), (1, -1), (-1, 
 edges = [[0,1,2,3,4,5,6,7],[56,57,58,59,60,61,62,63],[0,8,16,24,32,40,48,56],[7,15,23,31,39,47,55,63]]
 
 edge_lists = {idx:edge for edge in edges for idx in edge if idx not in corners}
-
-# print(edge_lists)
+class Strategy:
+    def best_strategy(self,board,player,best_move,still_running,time_limit):
+        move = quickMove(board,player)
+        best_move.value = move
 def checkEdge(brd,tkn,move):
     move_idx = edge_lists[move].index(move)
     # print(move_idx)
@@ -262,7 +262,7 @@ def negamax(brd,tkn):
 def quickMove(brd,tkn):
     if not brd: global HLLIM; HLLIM=tkn; return
 
-    if brd.count('.')<=HLLIM:
+    if brd.count('.')<=11:
         return alphabeta(brd,tkn,-65,65)[-1]
     return ruleOfThumb(brd,tkn)
     # if brd.count('.')<=HLLIM:
@@ -274,6 +274,30 @@ def quickMove(brd,tkn):
     #     print(ruleOfThumb(brd,tkn))
 
 def alphabeta(brd,tkn,lowerBnd,upperBnd):
+    eTkn = 'x' if tkn=='o' else 'o'
+    p_moves = determineMoves(brd,tkn)[0]
+    if not p_moves:
+        if not determineMoves(brd,eTkn)[0]:
+            return [brd.count(tkn) -brd.count(eTkn)]
+        ab = alphabeta(brd,eTkn,-upperBnd,-lowerBnd)
+        return [-ab[0]] + ab[1:] + [-1]
+    bestSoFar = [lowerBnd-1]
+    corners_in_moves = []
+    for corner in corners:
+        if corner in p_moves:
+            corners_in_moves.append(corner)
+    for corner in corners_in_moves:
+        p_moves.remove(corner)
+    p_moves = corners_in_moves+list(p_moves)
+    for mv in p_moves:
+        ab = alphabeta(determineMovesAndPlay(brd,tkn,eTkn,mv).lower(),eTkn,-upperBnd,-lowerBnd)
+        score = -ab[0]
+        if score<lowerBnd:continue
+        if score>upperBnd: return [score]
+        bestSoFar = [score] + ab[1:] + [mv]
+        lowerBnd = score+ 1
+    return bestSoFar
+def midgame_alpha_beta(brd,tkn,lowerBnd, upperBnd,level):
     eTkn = 'x' if tkn=='o' else 'o'
     p_moves = determineMoves(brd,tkn)[0]
     if not p_moves:
@@ -439,9 +463,9 @@ def main():
         #     print(f"My move is {moves_seq[-1]}")
         #     print(f"Min score: {min_score}; move sequence: {moves_seq}")
         #     # print(hits)c
-    if board.lower().count('.')<=HLLIM:
-    # if board.lower().count('.')<=HLLIM:
+    if board.lower().count('.')<=11:
 
+    # if board.lower().count('.')<=HLLIM:
             ab_res = alphabeta(board.lower(),tokenToPlay,-65,65)
             min_score,moves_seq = ab_res[0],ab_res[1:]
             print(f"My preferred move is {moves_seq[-1]}")
