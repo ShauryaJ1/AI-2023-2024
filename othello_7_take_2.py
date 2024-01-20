@@ -373,15 +373,17 @@ def specialEval_stability(brd,tkn,eTkn,stability):
     # return [2*(numMyCorners-numEnemyCorners) + numSafeEdges - eTknPmoves]
 def specialEval(brd,tkn,eTkn):
     numMyCorners = sum([1 for i in corners if brd[i]==tkn])
-    # numEnemyCorners = sum([1 for i in corners if brd[i]==eTkn])
+    numEnemyCorners = sum([1 for i in corners if brd[i]==eTkn])
     numSafeEdges = 0
     p_moves = determineMoves(brd,tkn)[0]
     for move in p_moves:
             if move in edge_lists:
                 if checkEdge(brd,tkn,move):
                     numSafeEdges+=1
+    return [7*(numMyCorners-numEnemyCorners) + 4*numSafeEdges + len(p_moves)]
+    # return [numMyCorners + count_stable_disks(brd,tkn) + numSafeEdges]
     # return [5*(numMyCorners-numEnemyCorners) + 3*count_stable_disks(brd,tkn) + 2*numSafeEdges + len(p_moves)]
-    return [numMyCorners + count_stable_disks(brd,tkn) + numSafeEdges]
+    # return [numMyCorners + count_stable_disks(brd,tkn) + numSafeEdges] times out
     # return [7*(numMyCorners-numEnemyCorners) + 5*count_stable_disks(brd,tkn) + 3*numSafeEdges + len(p_moves)]
     # eTknPmoves = len(determineMoves(brd,eTkn)[0])
     # return [4*(numMyCorners-numEnemyCorners) + 2*numSafeEdges + len(p_moves)] 79.7
@@ -413,6 +415,7 @@ def midgame_alpha_beta_stability(brd,tkn,lowerBnd, upperBnd,level,stability):
                 if is_stable(new_brd,tkn,flip,[False]*64):
                     current_stability+=1
         ab = midgame_alpha_beta_stability(new_brd.lower(),eTkn,-upperBnd,-lowerBnd,level-1,current_stability)
+        current_stability = stability
         score = -ab[0]
         if score<lowerBnd:continue
         if score>upperBnd: return [score]
@@ -597,8 +600,8 @@ def main():
             print(f"Min score: {min_score}; move sequence: {moves_seq}")
             # print(hits)c
     else:
-        print("My preferred move is ", quickMove(board.lower(),tokenToPlay))
-        mab_res = midgame_alpha_beta(board.lower(),tokenToPlay,-65,65,4)#3 also works
+        print("My preferred move is ", ruleOfThumb(board.lower(),tokenToPlay))
+        mab_res = midgame_alpha_beta(board.lower(),tokenToPlay,-65,65,3)#3 also works
         min_score,moves_seq = mab_res[0],mab_res[1:]
         print(f"My preferred move is {moves_seq[-1]}")
         print(f"Min score: {min_score}; move sequence: {moves_seq}")

@@ -296,27 +296,36 @@ def alphabeta(brd,tkn,lowerBnd,upperBnd):
         lowerBnd = score+ 1
     return bestSoFar
 def specialEval(brd,tkn,eTkn):
-    numMyCorners = sum([1 for i in corners if brd[i]==tkn])
-    # numEnemyCorners = sum([1 for i in corners if brd[i]==eTkn])
-    # numSafeEdges = 0
-    p_moves = determineMoves(brd,tkn)[0]
-    # for move in p_moves:
-    #         if move in edge_lists:
-    #             if checkEdge(brd,tkn,move):
-    #                 numSafeEdges+=1
-    # eTknPmoves = len(determineMoves(brd,eTkn)[0])
+    # numMyCorners = sum([1 for i in corners if brd[i]==tkn])
+    # # numEnemyCorners = sum([1 for i in corners if brd[i]==eTkn])
+    # # numSafeEdges = 0
+    # p_moves = determineMoves(brd,tkn)[0]
+    # # for move in p_moves:
+    # #         if move in edge_lists:
+    # #             if checkEdge(brd,tkn,move):
+    # #                 numSafeEdges+=1
+    # # eTknPmoves = len(determineMoves(brd,eTkn)[0])
 
-    # return 2*(numMyCorners) + numSafeEdges +len(p_moves)
-    return 2*(numMyCorners)+len(p_moves)
+    # # return 2*(numMyCorners) + numSafeEdges +len(p_moves)
+    # return 2*(numMyCorners)+len(p_moves)
+    numMyCorners = sum([1 for i in corners if brd[i]==tkn])
+    numEnemyCorners = sum([1 for i in corners if brd[i]==eTkn])
+    numSafeEdges = 0
+    p_moves = determineMoves(brd,tkn)[0]
+    for move in p_moves:
+            if move in edge_lists:
+                if checkEdge(brd,tkn,move):
+                    numSafeEdges+=1
+    return [7*(numMyCorners-numEnemyCorners) + 4*numSafeEdges + len(p_moves)]
 
 def midgame_alpha_beta(brd,tkn,lowerBnd, upperBnd,level):
     eTkn = 'x' if tkn=='o' else 'o'
     p_moves = determineMoves(brd,tkn)[0]
     if level ==0:
-        return [specialEval(brd,tkn,eTkn)-specialEval(brd,eTkn,tkn)]
+        return specialEval(brd,tkn,eTkn)
     if not p_moves:
         if not determineMoves(brd,eTkn)[0]:
-            return [specialEval(brd,tkn,eTkn)-specialEval(brd,eTkn,tkn)]
+            return [brd.count(tkn)-brd.count(eTkn)]
         ab = midgame_alpha_beta(brd,eTkn,-upperBnd,-lowerBnd,level-1)
         return [-ab[0]] + ab[1:] + [-1]
     bestSoFar = [lowerBnd-1]
@@ -489,7 +498,7 @@ def main():
         # print("My preferred move is ", quickMove(board.lower(),tokenToPlay))
         print("My preferred move is ", ruleOfThumb(board.lower(),tokenToPlay))
 
-        mab_res = midgame_alpha_beta(board.lower(),tokenToPlay,-65,65,2)
+        mab_res = midgame_alpha_beta(board.lower(),tokenToPlay,-65,65,3)
         min_score,moves_seq = mab_res[0],mab_res[1:]
         print(f"My preferred move is {moves_seq[-1]}")
         print(f"Min score: {min_score}; move sequence: {moves_seq}")

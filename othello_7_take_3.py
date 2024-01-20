@@ -296,6 +296,44 @@ def alphabeta(brd,tkn,lowerBnd,upperBnd):
         bestSoFar = [score] + ab[1:] + [mv]
         lowerBnd = score+ 1
     return bestSoFar
+def specialEval(brd,tkn,eTkn):
+    numMyCorners = sum([1 for i in corners if brd[i]==tkn])
+    numEnemyCorners = sum([1 for i in corners if brd[i]==eTkn])
+    numSafeEdges = 0
+    p_moves = determineMoves(brd,tkn)[0]
+    for move in p_moves:
+            if move in edge_lists:
+                if checkEdge(brd,tkn,move):
+                    numSafeEdges+=1
+    
+    return [7*(numMyCorners-numEnemyCorners) + 4*numSafeEdges-len(determineMoves(brd,eTkn)[0])]
+    # return [5*(numMycorners-numEnemyCorners)+3*numSafeEdges + len(p_moves)]
+def midgame_alphabeta(brd,tkn,lowerBnd,upperBnd,level):
+    eTkn = 'x' if tkn=='o' else 'o'
+    p_moves = determineMoves(brd,tkn)[0]
+    if level==0:
+        return specialEval(brd,tkn,eTkn)
+    if not p_moves:
+        if not determineMoves(brd,eTkn)[0]:
+            return [brd.count(tkn) -brd.count(eTkn)]
+        ab = midgame_alphabeta(brd,eTkn,-upperBnd,-lowerBnd,level-1)
+        return [-ab[0]] + ab[1:] + [-1]
+    bestSoFar = [lowerBnd-1]
+    corners_in_moves = []
+    for corner in corners:
+        if corner in p_moves:
+            corners_in_moves.append(corner)
+    for corner in corners_in_moves:
+        p_moves.remove(corner)
+    p_moves = corners_in_moves+list(p_moves)
+    for mv in p_moves:
+        ab = midgame_alphabeta(determineMovesAndPlay(brd,tkn,eTkn,mv).lower(),eTkn,-upperBnd,-lowerBnd,level-1)
+        score = -ab[0]
+        if score<lowerBnd:continue
+        if score>upperBnd: return [score]
+        bestSoFar = [score] + ab[1:] + [mv]
+        lowerBnd = score+ 1
+    return bestSoFar
 def main():
     # args = ['442919102113_12618_237_0172416_81415_3_4_720_5_611222532_934123847304223333945404143504654495351564859526055316162']
     moves_to_return = []
@@ -438,7 +476,7 @@ def main():
         #     print(f"My move is {moves_seq[-1]}")
         #     print(f"Min score: {min_score}; move sequence: {moves_seq}")
         #     # print(hits)c
-    if board.lower().count('.')<=HLLIM:
+    if board.lower().count('.')<=11:
     # if board.lower().count('.')<=HLLIM:
 
             ab_res = alphabeta(board.lower(),tokenToPlay,-65,65)
@@ -447,7 +485,11 @@ def main():
             print(f"Min score: {min_score}; move sequence: {moves_seq}")
             # print(hits)c
     else:
-        print("My preferred move is ", quickMove(board.lower(),tokenToPlay))
+        print("My preferred move is ", ruleOfThumb(board.lower(),tokenToPlay))
+        ab_res = midgame_alphabeta(board.lower(),tokenToPlay,-65,65,3)
+        min_score,moves_seq = ab_res[0],ab_res[1:]
+        print(f"My preferred move is {moves_seq[-1]}")
+        print(f"Min score: {min_score}; move sequence: {moves_seq}")
 
 
 if __name__ == '__main__':
