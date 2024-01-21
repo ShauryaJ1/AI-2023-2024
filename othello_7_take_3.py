@@ -10,13 +10,14 @@ global edges
 global edge_lists
 global cache
 global HLLIM
+global psblMovesCache
 cache = {}
 HLLIM = 0
 corners = {0,7,63,56}
 next_to_corners = {0:[1,8,9],7:[15,6,14],63:[62,55,54],56:[57,48,49]}
 directions = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (-1, -1), (1, -1), (-1, 1)]
 edges = [[0,1,2,3,4,5,6,7],[56,57,58,59,60,61,62,63],[0,8,16,24,32,40,48,56],[7,15,23,31,39,47,55,63]]
-
+psblMovesCache = {}
 edge_lists = {idx:edge for edge in edges for idx in edge if idx not in corners}
 
 # print(edge_lists)
@@ -33,7 +34,11 @@ def mobility(brd,tkn,p_moves):
     lens = []
     for move in p_moves:
         p_brd = determineMovesAndPlay(brd,tkn,opposite,move)
-        o_moves,_ = determineMoves(p_brd,opposite)
+        if (p_brd,opposite) in psblMovesCache:
+            o_moves,_ = psblMovesCache[(p_brd,opposite)]
+        else:
+            o_moves,t = determineMoves(p_brd,opposite)
+            psblMovesCache[(p_brd,opposite)] = (o_moves,t)
         lens.append((len(o_moves),move))
     return min(lens)[1]
 # printBoard('...ooo.x..oxxxx.xxoxxoooxxoxxoooxoxxoxxoooooooxo..xxoxxx..x.ooxx')
@@ -45,7 +50,11 @@ def ruleOfThumb(brd,tkn):
     Implementing move to safe edges
     Implementing mobility
     '''
-    p_moves,_ = determineMoves(brd,tkn)
+    if (brd,tkn) in psblMovesCache:
+        p_moves,_ = psblMovesCache[(brd,tkn)]
+    else:
+        p_moves,t = determineMoves(brd,tkn)
+        psblMovesCache[(brd,tkn)] = (p_moves,t)
     
     if p_moves:
         for move in p_moves:
@@ -300,21 +309,34 @@ def specialEval(brd,tkn,eTkn):
     numMyCorners = sum([1 for i in corners if brd[i]==tkn])
     numEnemyCorners = sum([1 for i in corners if brd[i]==eTkn])
     numSafeEdges = 0
-    p_moves = determineMoves(brd,tkn)[0]
+    if (brd,tkn) in psblMovesCache:
+        p_moves,_ = psblMovesCache[(brd,tkn)]
+    else:
+        p_moves,t = determineMoves(brd,tkn)[0]
+        psblMovesCache[(brd,tkn)] = (p_moves,t)
     for move in p_moves:
             if move in edge_lists:
                 if checkEdge(brd,tkn,move):
                     numSafeEdges+=1
     
-    return [7*(numMyCorners-numEnemyCorners) + 4*numSafeEdges-len(determineMoves(brd,eTkn)[0])]
-    # return [5*(numMycorners-numEnemyCorners)+3*numSafeEdges + len(p_moves)]
+    # return [7*(numMyCorners-numEnemyCorners) + 4*numSafeEdges-len(determineMoves(brd,eTkn)[0])]
+    return [4*(numMyCorners-numEnemyCorners)+4*numSafeEdges + len(p_moves)]
 def midgame_alphabeta(brd,tkn,lowerBnd,upperBnd,level):
     eTkn = 'x' if tkn=='o' else 'o'
-    p_moves = determineMoves(brd,tkn)[0]
+    if (brd,tkn) in psblMovesCache:
+        p_moves,_ = psblMovesCache[(brd,tkn)]
+    else:
+        p_moves,t = determineMoves(brd,tkn)
+        psblMovesCache[(brd,tkn)] = (p_moves,t)
     if level==0:
         return specialEval(brd,tkn,eTkn)
     if not p_moves:
-        if not determineMoves(brd,eTkn)[0]:
+        if (brd,eTkn) in psblMovesCache:
+            o_moves,_ = psblMovesCache[(brd,tkn)]
+        else:
+            o_moves,t = determineMoves(brd,eTkn)
+            psblMovesCache[(brd,eTkn)] = (o_moves,t)
+        if not o_moves:
             return [brd.count(tkn) -brd.count(eTkn)]
         ab = midgame_alphabeta(brd,eTkn,-upperBnd,-lowerBnd,level-1)
         return [-ab[0]] + ab[1:] + [-1]
@@ -419,7 +441,11 @@ def main():
                 
                 print(f"{tokenToPlay} plays to {a_move}")
                 new_board = determineMovesAndPlay(board,tokenToPlay,opposite,a_move)
-                opposite_moves, board_2 = determineMoves(new_board,tokenToPlay=opposite)
+                if (new_board,opposite) in psblMovesCache:
+                    opposite_moves,board_2 = psblMovesCache[(new_board,opposite)]
+                else:
+                    opposite_moves, board_2 = determineMoves(new_board,tokenToPlay=opposite)
+                    psblMovesCache[(new_board,opposite)] = opposite_moves,board_2
                 board_2 = board_2[:a_move] + tokenToPlay.upper() + board_2[a_move+1:]
                 printBoard(board_2)
                 print('\n')
@@ -431,7 +457,12 @@ def main():
                     board = removeAsterisk(board_2.lower())
                 else:
                     # print(f"No moves possible for {opposite}")
-                    moves, board_2 = determineMoves(removeAsterisk(board_2.lower()),tokenToPlay)
+                    if (removeAsterisk(board_2.lower()),tokenToPlay) in psblMovesCache:
+                        moves,board_2 = psblMovesCache[(removeAsterisk(board_2.lower()),tokenToPlay)]
+                    else:
+                        moves, board_2 = determineMoves(removeAsterisk(board_2.lower()),tokenToPlay)
+                        psblMovesCache[(removeAsterisk(board_2.lower()),tokenToPlay)] = moves,board_2
+                    # moves, board_2 = determineMoves(removeAsterisk(board_2.lower()),tokenToPlay)
                     if moves:
                         print(f"Possible moves for {tokenToPlay}:", ' '.join(str(i) for i in moves))
                         board = removeAsterisk(board_2.lower())
@@ -443,7 +474,12 @@ def main():
                 print_string = ''
                 print_string+=f"{tokenToPlay} plays to {a_move}" + '\n'
                 new_board = determineMovesAndPlay(board,tokenToPlay,opposite,a_move)
-                opposite_moves, board_2 = determineMoves(new_board,tokenToPlay=opposite)
+                if (new_board,opposite) in psblMovesCache:
+                    opposite_moves,board_2 = psblMovesCache[(new_board,opposite)]
+                else:
+                    opposite_moves, board_2 = determineMoves(new_board,tokenToPlay=opposite)
+                    psblMovesCache[(new_board,opposite)] = opposite_moves,board_2
+                # opposite_moves, board_2 = determineMoves(new_board,tokenToPlay=opposite)
                 board_2 = board_2[:a_move] + tokenToPlay.upper() + board_2[a_move+1:]
                 print_string+=printBoard2(board_2) + '\n'
                 print_string+=removeAsterisk(board_2.lower()) + ' '+ str(board_2.lower().count('x'))+ '/'+str(board_2.lower().count('o'))+'\n'
@@ -454,7 +490,12 @@ def main():
                     board = removeAsterisk(board_2.lower())
                 else:
                     # print_string+=f"No moves possible for {opposite}"
-                    moves, board_2 = determineMoves(removeAsterisk(board_2.lower()),tokenToPlay)
+                    if (removeAsterisk(board_2.lower()),tokenToPlay) in psblMovesCache:
+                        moves,board_2 = psblMovesCache[(removeAsterisk(board_2.lower()),tokenToPlay)]
+                    else:
+                        moves, board_2 = determineMoves(removeAsterisk(board_2.lower()),tokenToPlay)
+                        psblMovesCache[(removeAsterisk(board_2.lower()),tokenToPlay)] = moves,board_2
+                    # moves, board_2 = determineMoves(removeAsterisk(board_2.lower()),tokenToPlay)
                     if moves:
                         print_string+=f"Possible moves for {tokenToPlay}:"+' '.join(str(i) for i in moves)
                         board = removeAsterisk(board_2.lower())
@@ -484,12 +525,14 @@ def main():
             print(f"My preferred move is {moves_seq[-1]}")
             print(f"Min score: {min_score}; move sequence: {moves_seq}")
             # print(hits)c
-    else:
+    elif(board.lower().count('.')<=27):
         print("My preferred move is ", ruleOfThumb(board.lower(),tokenToPlay))
         ab_res = midgame_alphabeta(board.lower(),tokenToPlay,-65,65,3)
         min_score,moves_seq = ab_res[0],ab_res[1:]
         print(f"My preferred move is {moves_seq[-1]}")
         print(f"Min score: {min_score}; move sequence: {moves_seq}")
+    else:
+        print("My preferred move is ", ruleOfThumb(board.lower(),tokenToPlay))
 
 
 if __name__ == '__main__':
