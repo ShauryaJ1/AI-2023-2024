@@ -264,6 +264,7 @@ def main():
             tokenToPlay = opposite
             opposite = 'x' if tokenToPlay == 'o' else 'o'
             board = removeAsterisk(board_2.lower())
+            print(f"Enemy token has a mobility of {len(set(opposite_moves))}")#omit for grading
         else:
             print(f"No moves possible for {opposite}")
             moves, board_2 = determineMoves(removeAsterisk(board_2.lower()),tokenToPlay)
@@ -272,6 +273,7 @@ def main():
                 board = removeAsterisk(board_2.lower())
             else:
                 print(f"No moves possible for {tokenToPlay}\nGameOver")
+            print(f"Enemy token has a mobility of {len(set(moves))}")#omit for grading
     
     
 if __name__ == '__main__':
