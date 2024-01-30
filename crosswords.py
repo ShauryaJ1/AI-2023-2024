@@ -9,7 +9,10 @@ def file_to_lines():
 h,w = args[0][:args[0].index('x')] + args[0][1+args[0].index('x'):]
 num_squares = args[1]
 dict_list = file_to_lines()
-seedStrings = args[3]
+seedStrings = ""
+if len(args)>3:
+    seedStrings = args[3]
+
 
 # def seedStringBreakdown(seedString):
 #     orientation  = seedString[0]
