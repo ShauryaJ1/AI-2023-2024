@@ -34,43 +34,79 @@ def mobility(brd,tkn,p_moves):
     for move in p_moves:
         p_brd = determineMovesAndPlay(brd,tkn,opposite,move)
         o_moves,_ = determineMoves(p_brd,opposite)
+        print((len(o_moves),move))
         lens.append((len(o_moves),move))
     return min(lens)[1]
 # printBoard('...ooo.x..oxxxx.xxoxxoooxxoxxoooxoxxoxxoooooooxo..xxoxxx..x.ooxx')
-
-def ruleOfThumb(brd,tkn):
-    '''
-    Implementing move to empty corners
-    Implementing don't move around enemy or empty corners
-    Implementing move to safe edges
-    Implementing mobility
-    '''
-    p_moves,_ = determineMoves(brd,tkn)
+def ruleOfThumb(pzl,token):
+    possibleMoves = determineMoves(pzl,token)[0]
+    print(possibleMoves)
+    for ind in [0,7,63,56]:
+        if ind in possibleMoves:
+            return ind
     
-    if p_moves:
-        for move in p_moves:
-            if move in corners:
-                return move
-        opposite = 'x' if tkn == 'o' else 'o'
-        opps = []
-        # yours = []
-        for corner in corners:
-            if brd[corner]==opposite or brd[corner]=='.':
-                opps+=next_to_corners[corner]
-            # else:
-            #     yours+=next_to_corners[corner]
-        if (s:=p_moves-p_moves.intersection(set(opps))):
-            p_moves = s
-        for move in p_moves:
-            if move in edge_lists:
-                if checkEdge(brd,tkn,move):
-                    return move
-            # if move in yours:
-            #     return move
+    optimals = []
+    oppositeToken = "x" if token == "o" else "o"
+    avoidables = []
+    for ind in [0,7,56,63]:
+        if pzl[ind] !=token:
+            avoidables += next_to_corners[ind]
+        else:
+            optimals += next_to_corners[ind]
+
+    for move in optimals:
+        if move in possibleMoves:
+            return move
+    setAvoidables = set(avoidables)
+    pMoves = possibleMoves-setAvoidables
+
+    for pMove in pMoves:
         
-        return mobility(brd,tkn,p_moves)
-    else: return ''
-    # return [*p_moves][0]
+        if pMove in edge_lists:
+            if checkEdge(pzl,token,pMove):
+                return pMove
+            
+    
+    mob= mobility(pzl,token,pMoves)
+    # print(mob, l)
+    if mob != -1:
+        # print()
+        return mob
+    
+    return sorted([*possibleMoves])[0]
+# def ruleOfThumb(brd,tkn):
+#     '''
+#     Implementing move to empty corners
+#     Implementing don't move around enemy or empty corners
+#     Implementing move to safe edges
+#     Implementing mobility
+#     '''
+#     p_moves,_ = determineMoves(brd,tkn)
+    
+#     if p_moves:
+#         for move in p_moves:
+#             if move in corners:
+#                 return move
+#         opposite = 'x' if tkn == 'o' else 'o'
+#         opps = []
+#         # yours = []
+#         for corner in corners:
+#             if brd[corner]==opposite or brd[corner]=='.':
+#                 opps+=next_to_corners[corner]
+#             # else:
+#             #     yours+=next_to_corners[corner]
+#         if (s:=p_moves-p_moves.intersection(set(opps))):
+#             p_moves = s
+#         for move in p_moves:
+#             if move in edge_lists:
+#                 if checkEdge(brd,tkn,move):
+#                     return move
+#             # if move in yours:
+#             #     return move
+        
+#         return mobility(brd,tkn,p_moves)
+#     else: return ''
+#     # return [*p_moves][0]
 def printBoard(boardString):
    print(*[boardString[i:i+8] for i in range(0,64,8)],sep="\n")
 def printBoard2(boardString):
