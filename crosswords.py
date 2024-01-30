@@ -21,3 +21,6 @@ if __name__ == "__main__":
     print(h,w,num_squares,seedStrings)
     print()
     print(dict_list)
+
+
+#Shaurya Jain, pd 3, 2025
