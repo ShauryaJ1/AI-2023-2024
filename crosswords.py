@@ -85,12 +85,18 @@ def placeWord(xword_board,seedStringBreakdown):
     
     return ''.join(placed),minus_count
 def placeBlockingSquaresBasic(puzzle,num_squares):
+    '''
+    Doesnt do anything special...just puts the blocks down
+    '''
     availables = [i for i in range(len(puzzle))if puzzle[i]=='-']
     puzzle_list= list(puzzle)
     for i in range(num_squares):
         puzzle_list[availables[i]] = '#'
     return ''.join(puzzle_list) 
 def rotation(puzzle):
+    '''
+    Finds the rotation of the puzzle
+    '''
     p1 = 0
     p2 = h-1
     splits = [puzzle[i:i+w][::-1] for i in range(0,h*w,w)]
@@ -102,12 +108,18 @@ def rotation(puzzle):
         p2-=1
     return ''.join(splits)
 def onlyBlocks(puzzle):
+    '''
+    Removes all characters that are not blocks
+    '''
     puzzle_list = list(puzzle)
     for i in range(len(puzzle_list)):
         if puzzle_list[i]!='#':
             puzzle_list[i] = '-'
     return ''.join(puzzle_list)
 def isInvalid(puzzle):
+    '''
+    Only checks if the rotation of the onlyBlocks form of the puzzle is the same as the original puzzle
+    '''
     return onlyBlocks(puzzle) != onlyBlocks(rotation(puzzle))
 def placeBlockingSquares(puzzle,num_blocks,availables):  
     if isInvalid(puzzle):
