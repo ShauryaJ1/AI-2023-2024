@@ -9,18 +9,12 @@ global alphabetString
 
 # args=[ '13x13', 32, 'Eckel.txt' ,'H1x4#Toe#', 'H9x2#' ,'V3x6#', 'H10x0Scintillating', 'V0x5stirrup' ,'H4x2##Ordained' ,'V0x1Ward' ,'V0x12Lis', 'V5x0orb']
 # args = ['7x7',40,'Eckel.txt']
-# args = ['13x13', 32,'Eckel.txt' ,'V2x4#', 'V1x9#', 'V3x2#', 'h8x2#moo#', 'v5x5#two#' ,'h6x4#ten#' ,'v3x7#own#' ,'h4x6#orb#','H12x4Send']
-# args = ['6x6','36','Eckel.txt']
-# args = ['6x6','20','Eckel.txt']
-# args= ['10x13', '32', 'Eckel.txt', 'V6x0#', 'V9x3#','H3x9#', 'V0x8Obituaries']
-# args = ['9x30', 50, 'Eckel.txt', 'h4x12d#', 'h3x9t#', 'h2x9#' ,'v2x0eye' ,'V5x1#w', 'V8x26l']
-# args = ['8x8',50,'Eckel.txt']
 def file_to_lines():
     return open(args[2]).read().splitlines()
 alphabetString = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 h,w = int(args[0][:args[0].index('x')]) ,int(args[0][1+args[0].index('x'):])
 num_squares = int(args[1])
-# dict_list = file_to_lines()
+dict_list = file_to_lines()
 seedStrings = ""
 if len(args)>3:
     seedStrings = args[3:]
@@ -76,22 +70,20 @@ def placeWord(xword_board,seedStringBreakdown):
         a new crossword puzzle with the string having been placed - string
         a minusCount which is how many blocks need to be subtracted given the number of them submitted via grader input
     '''
-    if not xword_board:
-        print('no puzzle')
     placed = list(xword_board)
     orientation = seedStringBreakdown[0]
     seedStringHeight = int(seedStringBreakdown[1])
     seedStringWidth = int(seedStringBreakdown[2])
     charactersToPlace = seedStringBreakdown[3]
     startIndex = seedStringHeight*w + seedStringWidth
-    if orientation.lower() == 'h':
+    if orientation == 'H':
         indices_to_change = [startIndex+i for i in range(len(charactersToPlace))]
     else:
         indices_to_change = [startIndex + i * w for i in range(len(charactersToPlace))]
     for char_idx,board_idx in enumerate(indices_to_change):
         if charactersToPlace[char_idx] =='#':
             # print(placed)
-            placed,ni,ad = placeBlockingSquaresSpacing(''.join(placed),num_squares,{},board_idx,True)
+            placed,ni,ad = placeBlockingSquaresSpacing(''.join(placed),num_squares,{},board_idx)
             placed = list(placed)
         else:
             placed[board_idx] = charactersToPlace[char_idx]
@@ -105,10 +97,7 @@ def placeWord(xword_board,seedStringBreakdown):
     #             minus_count+=1
     #         placed[symmetrical_lookup[indices_to_change[i]]] = '#'
     # print(printPuzzle(''.join(placed),h,w,0))
-    if not placed:
-        print('nothing placed')
     return ''.join(placed),minus_count
-
 def placeBlockingSquaresBasic(puzzle,num_squares):
     '''
     Doesnt do anything special...just puts the blocks down
@@ -141,40 +130,6 @@ def onlyBlocks(puzzle):
         if puzzle_list[i]!='#':
             puzzle_list[i] = '-'
     return ''.join(puzzle_list)
-def connectivity(puzzle):
-    '''
-    Accepts a puzzle
-    Returns boolean representing connected or not
-    '''
-
-    '''
-    Make adjacency list 
-    '''
-    adj_list = {}
-    for i,c in enumerate(puzzle):
-        if c!='#':
-            val = []
-            if 0<=i-w<h*w and puzzle[i-w]!='#':
-                val.append(i-w)
-            if 0<=i+w<h*w and puzzle[i+w]!='#':
-                val.append(i+w)
-            if i%w!=0 and 0<=i-1<h*w and puzzle[i-1]!='#':
-                val.append(i-1)
-            if i%w!=w-1 and 0<=i+1<h*w and puzzle[i+1]!='#':
-                val.append(i+1)
-            adj_list[i] = val
-    not_blocks = [i for i in range(len(puzzle)) if puzzle[i]!='#']
-    if not not_blocks:
-        return True
-    visited = {i:False for i in range(h*w)}
-    stack = [not_blocks[0]]
-    while stack:
-        t = stack.pop()
-        visited[t] = True
-        for idx in adj_list[t]:
-            if not visited[idx]:
-                stack.append(idx)
-    return sum([1 for i in visited if visited[i]]) == len(not_blocks)
 def isInvalid(puzzle):
     '''
     Only checks if the rotation of the onlyBlocks form of the puzzle is the same as the original puzzle
@@ -201,8 +156,7 @@ def placeBlockingSquares(puzzle,num_blocks,availables):
     
 
     return ''
-
-def placeBlockingSquaresSpacing(puzzle,num_blocks,availables,space,inSS):
+def placeBlockingSquaresSpacing(puzzle,num_blocks,availables,space):
     '''
     Accepts:
         Puzzle, Blocks, Available Spaces, Chosen Space to place
@@ -220,16 +174,13 @@ def placeBlockingSquaresSpacing(puzzle,num_blocks,availables,space,inSS):
     # print(new_puzzle)
     while newly_added:
         if puzzle.count('#')>num_blocks:
+            # print('nothing')
             return '',0,0
         # print(newly_added)
         toCheck = newly_added.pop(0)
-
         # print(toCheck)
         # print(toCheck)
         add_count+=1
-        # print(len(new_puzzle))
-        if new_puzzle[toCheck] in alphabetString:
-            return '',0,0
         new_puzzle[toCheck] = '#'
         #up
         up = [toCheck-(i*width) for i in range(1,4) if 0<=toCheck-(i*width)<height*width]
@@ -258,12 +209,11 @@ def placeBlockingSquaresSpacing(puzzle,num_blocks,availables,space,inSS):
                 for pos in up:
                     if new_puzzle[pos] in alphabetString:
                         return '',0,0
-                    if new_puzzle[pos] != '#' and pos not in new_indices:
+                    if pos not in new_indices:
                         newly_added.append(pos)
                         new_indices.append(pos)
                 break
             if new_puzzle[u] in alphabetString and not all(True for a in up if new_puzzle[a] in alphabetString or a=='-'):
-                # print('nothing')
                 return '',0,0
             if new_puzzle[u] == '#':
                 for j in up[:i]:
@@ -276,14 +226,12 @@ def placeBlockingSquaresSpacing(puzzle,num_blocks,availables,space,inSS):
             if len(down)<3:
                 for pos in down:
                     if new_puzzle[pos] in alphabetString:
-                        # print('nothing')
                         return '',0,0
-                    if new_puzzle[pos] != '#' and pos not in new_indices:
+                    if pos not in new_indices:
                         newly_added.append(pos)
                         new_indices.append(pos)
                 break
             if new_puzzle[d] in alphabetString  and not all(True for a in down if new_puzzle[a] in alphabetString or a=='-'):
-                # print('nothing')
                 return '',0,0
             if new_puzzle[d] == '#':
                 for j in down[:i]:
@@ -295,14 +243,12 @@ def placeBlockingSquaresSpacing(puzzle,num_blocks,availables,space,inSS):
             if len(left)<3:
                 for pos in left:
                     if new_puzzle[pos] in alphabetString:
-                        # print('nothing')
                         return '',0,0
-                    if new_puzzle[pos] != '#' and pos not in new_indices:
+                    if pos not in new_indices:
                         newly_added.append(pos)
                         new_indices.append(pos)
                 break
             if new_puzzle[l] in alphabetString  and not all(True for a in left if new_puzzle[a] in alphabetString or a=='-'):
-                # print('nothing')
                 return '',0,0
             if new_puzzle[l] == '#':
                 for j in left[:i]:
@@ -314,14 +260,12 @@ def placeBlockingSquaresSpacing(puzzle,num_blocks,availables,space,inSS):
             if len(right)<3:
                 for pos in right:
                     if new_puzzle[pos] in alphabetString:
-                        # print('nothing')
                         return '',0,0
-                    if new_puzzle[pos] != '#' and pos not in new_indices:
+                    if pos not in new_indices:
                         newly_added.append(pos)
                         new_indices.append(pos)
                 break
             if new_puzzle[r] in alphabetString and not all(True for a in right if new_puzzle[a] in alphabetString or a=='-'):
-                # print('nothing')
                 return '',0,0
             if new_puzzle[r] == '#':
                 for j in right[:i]:
@@ -332,113 +276,12 @@ def placeBlockingSquaresSpacing(puzzle,num_blocks,availables,space,inSS):
     for idx in new_indices:
             if new_puzzle[symmetrical_lookup[idx]]!='-':
                 break
-            # new_puzzle[symmetrical_lookup[idx]] = '#'
-            new_puzzle,_,_ = placeBlockingSquaresSpacing(''.join(new_puzzle),num_blocks,availables,symmetrical_lookup[idx],inSS)
-            if not new_puzzle:
-                return '',0,0
-            new_puzzle = list(new_puzzle)
+            new_puzzle[symmetrical_lookup[idx]] = '#'
             add_count+=1
             new_indices.append(symmetrical_lookup[idx])
+    # print(new_indices)
+    return ''.join(new_puzzle),new_indices,add_count
     
-    if not inSS:
-        if connectivity(b:=''.join(new_puzzle)):
-            return b,new_indices,add_count
-        return '',0,0
-    else:
-        return ''.join(new_puzzle),new_indices,add_count
-    #     for i,u in enumerate(up):
-    #             if len(up)<3:
-    #                 for pos in up:
-    #                     if new_puzzle[pos] in alphabetString:
-    #                         return '',0,0
-    #                     if new_puzzle[pos] != '#' and pos not in new_indices:
-    #                         newly_added.append(pos)
-    #                         new_indices.append(pos)
-    #                 break
-    #             if new_puzzle[u] in alphabetString and not all([new_puzzle[a] in alphabetString or new_puzzle[a]=='-' for a in up]):
-    #                 # print('nothing')
-    #                 return '',0,0
-    #             if new_puzzle[u] == '#':
-    #                 for j in up[:i]:
-    #                     if new_puzzle[j]!='#' and j not in new_indices:
-    #                         newly_added.append(j)
-    #                         new_indices.append(j)
-            
-            
-    #     for i,d in enumerate(down):
-    #         if len(down)<3:
-    #             for pos in down:
-    #                 if new_puzzle[pos] in alphabetString:
-    #                     # print('nothing')
-    #                     return '',0,0
-    #                 if new_puzzle[pos] != '#' and pos not in new_indices:
-    #                     newly_added.append(pos)
-    #                     new_indices.append(pos)
-    #             break
-    #         if new_puzzle[d] in alphabetString  and not all([new_puzzle[a] in alphabetString or new_puzzle[a]=='-' for a in down]):
-    #             # print('nothing')
-    #             return '',0,0
-    #         if new_puzzle[d] == '#':
-    #             for j in down[:i]:
-    #                 if new_puzzle[j]!='#' and j not in new_indices:
-                        
-    #                     newly_added.append(j)
-    #                     new_indices.append(j)
-    #     for i,l in enumerate(left):
-    #         if len(left)<3:
-    #             for pos in left:
-    #                 if new_puzzle[pos] in alphabetString:
-    #                     # print('nothing')
-    #                     return '',0,0
-    #                 if new_puzzle[pos] != '#' and pos not in new_indices:
-    #                     newly_added.append(pos)
-    #                     new_indices.append(pos)
-    #             break
-    #         if new_puzzle[l] in alphabetString  and not all([new_puzzle[a] in alphabetString or new_puzzle[a]=='-' for a in left]):
-    #             # print('nothing')
-    #             return '',0,0
-    #         if new_puzzle[l] == '#':
-    #             for j in left[:i]:
-    #                 if new_puzzle[j]!='#' and j not in new_indices:
-    #                     newly_added.append(j)
-    #                     new_indices.append(j)
-            
-    #     for i,r in enumerate(right):
-    #         if len(right)<3:
-    #             for pos in right:
-    #                 if new_puzzle[pos] in alphabetString:
-    #                     # print('nothing')
-    #                     return '',0,0
-    #                 if new_puzzle[pos] != '#' and pos not in new_indices:
-    #                     newly_added.append(pos)
-    #                     new_indices.append(pos)
-    #             break
-    #         if new_puzzle[r] in alphabetString and not all([new_puzzle[a] in alphabetString or new_puzzle[a]=='-' for a in right]):
-    #             # print('nothing')
-    #             return '',0,0
-    #         if new_puzzle[r] == '#':
-    #             for j in right[:i]:
-    #                 if new_puzzle[j]!='#' and j not in new_indices:
-    #                     newly_added.append(j)
-    #                     new_indices.append(j)
-            
-    # for idx in new_indices:
-    #         if new_puzzle[symmetrical_lookup[idx]]!='-':
-    #             break
-    #         # new_puzzle[symmetrical_lookup[idx]] = '#'
-    #         new_puzzle,_,_ = placeBlockingSquaresSpacing(''.join(new_puzzle),num_blocks,availables,symmetrical_lookup[idx],inSS)
-    #         if not new_puzzle:
-    #             return '',0,0
-    #         new_puzzle = list(new_puzzle)
-    #         add_count+=1
-    #         new_indices.append(symmetrical_lookup[idx])
-    
-    # if not inSS:
-    #     if connectivity(b:=''.join(new_puzzle)):
-    #         return b,new_indices,add_count
-    #     return '',0,0
-    # else:
-    #     return ''.join(new_puzzle),new_indices,add_count
 
 def bruteForce(puzzle,num_blocks,availables):
     '''
@@ -450,7 +293,7 @@ def bruteForce(puzzle,num_blocks,availables):
     for choice in availables:
         if puzzle[symmetrical_lookup[choice]] != '-':
             continue
-        plc,ni,ad = placeBlockingSquaresSpacing(puzzle,num_blocks,availables,choice,False)
+        plc,ni,ad = placeBlockingSquaresSpacing(puzzle,num_blocks,availables,choice)
         if isInvalid(plc):
             continue
         if not plc:
@@ -458,9 +301,7 @@ def bruteForce(puzzle,num_blocks,availables):
         if plc.count('#')>num_blocks:
             continue
         return bruteForce(plc,num_blocks,availables-set(ni))
-    # print(availables)
-    # print('nothing')
-    return puzzle
+    return ''
 def printPuzzle(puzzle,h,w,num_squares):
     '''
     Accepts 
@@ -481,68 +322,24 @@ def printPuzzle(puzzle,h,w,num_squares):
     
 if __name__ == "__main__":
     # print(h,w,num_squares,seedStrings)
-    # oddPos = -1
-    alphabetString = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    h,w = int(args[0][:args[0].index('x')]) ,int(args[0][1+args[0].index('x'):])
-    num_squares = int(args[1])
-    # dict_list = file_to_lines()
-    seedStrings = ""
-    if len(args)>3:
-        seedStrings = args[3:]
-
-    positions = [i for i in range(h*w)]
-    p1 = 0
-    p2 = h-1
-    splits = [positions[i:i+w][::-1] for i in range(0,h*w,w)]
-    while p1<=p2:
-            temp = splits[p1]
-            splits[p1] = splits[p2]
-            splits[p2] = temp
-            p1+=1
-            p2-=1
-    reversed = []
-    for s in splits:
-        reversed+=s
-    symmetrical_lookup = {i:v for i,v in enumerate(reversed)}
-
     puzzle = '-'*(h*w)
     breakdowns = []
     for seedString in seedStrings:
         breakdowns.append(seedStringBreakdown(seedString))
-    
     # print(breakdowns)
-    if num_squares%2==1:
-        # print('ODD')
-        for key in symmetrical_lookup:
-            if symmetrical_lookup[key] == key:
-                temp_puzzle = list(puzzle)
-                temp_puzzle[key] = '#'
-                puzzle = ''.join(temp_puzzle)
     num_blocks = num_squares - sum(b[3].count('#') for b in breakdowns)
-    
     for breakdown in breakdowns:
-        # print(breakdown)
-        if not puzzle:
-            print('NO PUZZLE')
         puzzle,mc = placeWord(puzzle,breakdown)
         num_blocks-=mc
     # print(printPuzzle(puzzle,h,w,0))
     # print(num_squares)
-    
-        
-    # print(availables)
-    
     availables={i for i in range(len(puzzle)) if puzzle[i]=='-' and puzzle[symmetrical_lookup[i]]=='-'}
+    # print(availables)
     bF = bruteForce(puzzle,num_squares,availables)   
-    # print(bF.count('#'))
     # availables = {i for i in range(h*w) if puzzle[i]=='-' and puzzle[symmetrical_lookup[i]]=='-'}
     # final_puzzle = placeBlockingSquares(puzzle,num_blocks,availables)
-    print(bF.count('#'))
+    # print(bF.count('#'))
     print(printPuzzle(bF,h,w,0))
-    # print(printPuzzle(runRoute(''.join(['-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '#', '#', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-']),3,9),10,13,0))
-    # print(seedStringBreakdown('h6x0'))
-    # print(connectivity(bF))
-
     # print('\n'*5, printPuzzle('-------------------------',5,5,0))
     # tp,ni,ad = placeBlockingSquaresSpacing('-------------------------',5,{},5)
     # print(printPuzzle(tp,5,5,0))

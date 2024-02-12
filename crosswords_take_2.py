@@ -15,6 +15,7 @@ global alphabetString
 # args= ['10x13', '32', 'Eckel.txt', 'V6x0#', 'V9x3#','H3x9#', 'V0x8Obituaries']
 # args = ['9x30', 50, 'Eckel.txt', 'h4x12d#', 'h3x9t#', 'h2x9#' ,'v2x0eye' ,'V5x1#w', 'V8x26l']
 # args = ['8x8',50,'Eckel.txt']
+# args = ['9x9',14,'Eckel.txt','V0x4con','V6x4ate']
 def file_to_lines():
     return open(args[2]).read().splitlines()
 alphabetString = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -228,8 +229,6 @@ def placeBlockingSquaresSpacing(puzzle,num_blocks,availables,space,inSS):
         # print(toCheck)
         add_count+=1
         # print(len(new_puzzle))
-        if new_puzzle[toCheck] in alphabetString:
-            return '',0,0
         new_puzzle[toCheck] = '#'
         #up
         up = [toCheck-(i*width) for i in range(1,4) if 0<=toCheck-(i*width)<height*width]
@@ -262,7 +261,7 @@ def placeBlockingSquaresSpacing(puzzle,num_blocks,availables,space,inSS):
                         newly_added.append(pos)
                         new_indices.append(pos)
                 break
-            if new_puzzle[u] in alphabetString and not all(True for a in up if new_puzzle[a] in alphabetString or a=='-'):
+            if new_puzzle[u] in alphabetString and not all([new_puzzle[a] in alphabetString or new_puzzle[a]=='-' for a in up]):
                 # print('nothing')
                 return '',0,0
             if new_puzzle[u] == '#':
@@ -282,7 +281,7 @@ def placeBlockingSquaresSpacing(puzzle,num_blocks,availables,space,inSS):
                         newly_added.append(pos)
                         new_indices.append(pos)
                 break
-            if new_puzzle[d] in alphabetString  and not all(True for a in down if new_puzzle[a] in alphabetString or a=='-'):
+            if new_puzzle[d] in alphabetString  and not all([new_puzzle[a] in alphabetString or new_puzzle[a]=='-' for a in down]):
                 # print('nothing')
                 return '',0,0
             if new_puzzle[d] == '#':
@@ -301,7 +300,7 @@ def placeBlockingSquaresSpacing(puzzle,num_blocks,availables,space,inSS):
                         newly_added.append(pos)
                         new_indices.append(pos)
                 break
-            if new_puzzle[l] in alphabetString  and not all(True for a in left if new_puzzle[a] in alphabetString or a=='-'):
+            if new_puzzle[l] in alphabetString  and not all([new_puzzle[a] in alphabetString or new_puzzle[a]=='-' for a in left]):
                 # print('nothing')
                 return '',0,0
             if new_puzzle[l] == '#':
@@ -320,7 +319,7 @@ def placeBlockingSquaresSpacing(puzzle,num_blocks,availables,space,inSS):
                         newly_added.append(pos)
                         new_indices.append(pos)
                 break
-            if new_puzzle[r] in alphabetString and not all(True for a in right if new_puzzle[a] in alphabetString or a=='-'):
+            if new_puzzle[r] in alphabetString and not all([new_puzzle[a] in alphabetString or new_puzzle[a]=='-' for a in right]):
                 # print('nothing')
                 return '',0,0
             if new_puzzle[r] == '#':
@@ -346,99 +345,6 @@ def placeBlockingSquaresSpacing(puzzle,num_blocks,availables,space,inSS):
         return '',0,0
     else:
         return ''.join(new_puzzle),new_indices,add_count
-    #     for i,u in enumerate(up):
-    #             if len(up)<3:
-    #                 for pos in up:
-    #                     if new_puzzle[pos] in alphabetString:
-    #                         return '',0,0
-    #                     if new_puzzle[pos] != '#' and pos not in new_indices:
-    #                         newly_added.append(pos)
-    #                         new_indices.append(pos)
-    #                 break
-    #             if new_puzzle[u] in alphabetString and not all([new_puzzle[a] in alphabetString or new_puzzle[a]=='-' for a in up]):
-    #                 # print('nothing')
-    #                 return '',0,0
-    #             if new_puzzle[u] == '#':
-    #                 for j in up[:i]:
-    #                     if new_puzzle[j]!='#' and j not in new_indices:
-    #                         newly_added.append(j)
-    #                         new_indices.append(j)
-            
-            
-    #     for i,d in enumerate(down):
-    #         if len(down)<3:
-    #             for pos in down:
-    #                 if new_puzzle[pos] in alphabetString:
-    #                     # print('nothing')
-    #                     return '',0,0
-    #                 if new_puzzle[pos] != '#' and pos not in new_indices:
-    #                     newly_added.append(pos)
-    #                     new_indices.append(pos)
-    #             break
-    #         if new_puzzle[d] in alphabetString  and not all([new_puzzle[a] in alphabetString or new_puzzle[a]=='-' for a in down]):
-    #             # print('nothing')
-    #             return '',0,0
-    #         if new_puzzle[d] == '#':
-    #             for j in down[:i]:
-    #                 if new_puzzle[j]!='#' and j not in new_indices:
-                        
-    #                     newly_added.append(j)
-    #                     new_indices.append(j)
-    #     for i,l in enumerate(left):
-    #         if len(left)<3:
-    #             for pos in left:
-    #                 if new_puzzle[pos] in alphabetString:
-    #                     # print('nothing')
-    #                     return '',0,0
-    #                 if new_puzzle[pos] != '#' and pos not in new_indices:
-    #                     newly_added.append(pos)
-    #                     new_indices.append(pos)
-    #             break
-    #         if new_puzzle[l] in alphabetString  and not all([new_puzzle[a] in alphabetString or new_puzzle[a]=='-' for a in left]):
-    #             # print('nothing')
-    #             return '',0,0
-    #         if new_puzzle[l] == '#':
-    #             for j in left[:i]:
-    #                 if new_puzzle[j]!='#' and j not in new_indices:
-    #                     newly_added.append(j)
-    #                     new_indices.append(j)
-            
-    #     for i,r in enumerate(right):
-    #         if len(right)<3:
-    #             for pos in right:
-    #                 if new_puzzle[pos] in alphabetString:
-    #                     # print('nothing')
-    #                     return '',0,0
-    #                 if new_puzzle[pos] != '#' and pos not in new_indices:
-    #                     newly_added.append(pos)
-    #                     new_indices.append(pos)
-    #             break
-    #         if new_puzzle[r] in alphabetString and not all([new_puzzle[a] in alphabetString or new_puzzle[a]=='-' for a in right]):
-    #             # print('nothing')
-    #             return '',0,0
-    #         if new_puzzle[r] == '#':
-    #             for j in right[:i]:
-    #                 if new_puzzle[j]!='#' and j not in new_indices:
-    #                     newly_added.append(j)
-    #                     new_indices.append(j)
-            
-    # for idx in new_indices:
-    #         if new_puzzle[symmetrical_lookup[idx]]!='-':
-    #             break
-    #         # new_puzzle[symmetrical_lookup[idx]] = '#'
-    #         new_puzzle,_,_ = placeBlockingSquaresSpacing(''.join(new_puzzle),num_blocks,availables,symmetrical_lookup[idx],inSS)
-    #         if not new_puzzle:
-    #             return '',0,0
-    #         new_puzzle = list(new_puzzle)
-    #         add_count+=1
-    #         new_indices.append(symmetrical_lookup[idx])
-    
-    # if not inSS:
-    #     if connectivity(b:=''.join(new_puzzle)):
-    #         return b,new_indices,add_count
-    #     return '',0,0
-    # else:
-    #     return ''.join(new_puzzle),new_indices,add_count
 
 def bruteForce(puzzle,num_blocks,availables):
     '''
