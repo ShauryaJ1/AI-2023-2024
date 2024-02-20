@@ -16,11 +16,22 @@ global alphabetString
 # args = ['9x30', 50, 'Eckel.txt', 'h4x12d#', 'h3x9t#', 'h2x9#' ,'v2x0eye' ,'V5x1#w', 'V8x26l']
 # args = ['8x8',50,'Eckel.txt']
 def file_to_lines():
-    return open(args[2]).read().splitlines()
+    return open(args[0]).read().splitlines()
 alphabetString = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+dict_list = file_to_lines()
+dict_dict = {}
+for word in dict_list:
+    if len(word) in dict_dict:
+        dict_dict[len(word)] +=[word]
+    else:
+        dict_dict[len(word)] = [word]
+# for key in dict_dict:
+#     print(f"{key}: {dict_dict[key][:5]}")
+
+args = args[1:]
 h,w = int(args[0][:args[0].index('x')]) ,int(args[0][1+args[0].index('x'):])
 num_squares = int(args[1])
-# dict_list = file_to_lines()
 seedStrings = ""
 if len(args)>3:
     seedStrings = args[3:]
@@ -48,6 +59,19 @@ Make a function to check symmetry
 
 
 '''
+def wordSearch(split):
+    '''
+    Given a word length and split, returns a word
+    '''
+    word_length = len(split)
+    possibles = dict_dict[word_length]
+    # print(possibles)
+    letter_indices = [i for i in range(word_length) if split[i] in alphabetString]
+    for possible in possibles:
+        if all(possible[i]==split.lower()[i] for i in letter_indices):
+            return(word)
+    return ''
+
 def seedStringBreakdown(seedString):
     '''
     Accepts a seedString as an argument
@@ -461,6 +485,39 @@ def bruteForce(puzzle,num_blocks,availables):
     # print(availables)
     # print('nothing')
     return puzzle
+def fillInWordsHorizontally(puzzle):
+    puzzle_list = list(puzzle)
+    availables = {i for i in range(h*w) if puzzle[i]=='-'}
+    horizontal_lines = [[j for j in range(i*w,i*w+w)] for i in range(h)]
+    horizontal_lines_of_puzzle = [''.join([puzzle[j] for j in range(i*w,i*w+w)]) for i in range(h)]
+    # print(horizontal_lines)
+    # print(horizontal_lines_of_puzzle)
+    new_h_lines = []
+    for i,v in enumerate(horizontal_lines_of_puzzle):
+        c_hline = v
+        splits = v.split('#')
+        for split in splits:
+            # print(split)
+            if any(char in alphabetString for char in split):
+                # continue
+                letter_indices = [i for i in range(len(split)) if split[i] in alphabetString]
+                if len(split) in dict_dict:
+                    for word in dict_dict[len(split)]:
+                        if all(word[i]==split.lower()[i] for i in letter_indices):
+                            word_to_be_placed = word
+                            dict_dict[len(split)].remove(word)
+                            c_hline = c_hline[:c_hline.index(split)] + word_to_be_placed + c_hline[c_hline.index(split)+len(split):]
+                            break
+
+            elif(split and len(split) in dict_dict):
+                word_to_be_placed = dict_dict[len(split)][0]
+                dict_dict[len(split)] = dict_dict[len(split)][1:]
+                c_hline = c_hline[:c_hline.index(split)] + word_to_be_placed + c_hline[c_hline.index(split)+len(split):]
+    
+        new_h_lines.append(c_hline)
+                
+
+    print(printPuzzle(''.join(new_h_lines),h,w,0))
 def printPuzzle(puzzle,h,w,num_squares):
     '''
     Accepts 
@@ -482,13 +539,14 @@ def printPuzzle(puzzle,h,w,num_squares):
 if __name__ == "__main__":
     # print(h,w,num_squares,seedStrings)
     # oddPos = -1
+    # print(args)
     alphabetString = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
     h,w = int(args[0][:args[0].index('x')]) ,int(args[0][1+args[0].index('x'):])
     num_squares = int(args[1])
     # dict_list = file_to_lines()
     seedStrings = ""
-    if len(args)>3:
-        seedStrings = args[3:]
+    if len(args)>2:
+        seedStrings = args[2:]
 
     positions = [i for i in range(h*w)]
     p1 = 0
@@ -527,6 +585,7 @@ if __name__ == "__main__":
         puzzle,mc = placeWord(puzzle,breakdown)
         num_blocks-=mc
     # print(printPuzzle(puzzle,h,w,0))
+    # print(printPuzzle(puzzle,h,w,0))
     # print(num_squares)
     
         
@@ -539,6 +598,9 @@ if __name__ == "__main__":
     # final_puzzle = placeBlockingSquares(puzzle,num_blocks,availables)
     print(bF.count('#'))
     print(printPuzzle(bF,h,w,0))
+    print()
+    fillInWordsHorizontally(bF)
+    # print(wordSearch('-A-'))
     # print(printPuzzle(runRoute(''.join(['-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '#', '#', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-']),3,9),10,13,0))
     # print(seedStringBreakdown('h6x0'))
     # print(connectivity(bF))
