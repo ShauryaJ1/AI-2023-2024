@@ -463,7 +463,49 @@ def placeBlockingSquaresSpacing(puzzle,num_blocks,availables,space,inSS):
     #     return '',0,0
     # else:
     #     return ''.join(new_puzzle),new_indices,add_count
+def calculateSpaces(puzzle,space):
+    '''
+    receives puzzle and space and returns value for word spaces
+    '''
+    
+    row= puzzle[(space//w)*(w):(space//w)*(w+1)]
+    col = puzzle[space%w:h*w:w]
+    
+    row_sections = row.split('#')
+    col_sections = col.split('#')
 
+    max_row_section = max([split.count('-') for split in row_sections])
+    max_col_section = max([split.count('-') for split in col_sections])
+
+    return (max_col_section + max_row_section, row_sections, col_sections,space)
+
+
+
+
+    # return sum(len(i) for i in puzzle[space%w:space:w].split('#')) + sum(len(i) for i in puzzle[space%w + w * (space//w)::w].split('#')) + sum(len(i) for i in puzzle[(space//w)*w:(space//w + 1)*(w)].split('#'))
+    
+    # print([(len(i),i) for i in puzzle[space%w::w].split('#')])
+    # print(space//w)
+    # print(puzzle[(space//w)*w:(space//w + 1)*(w)])
+def place_words_with_bruteforce(puzzle, possibles):
+    if puzzle.count('-') == 0:
+        return puzzle
+    sorted_possibles = []
+    for possible in possibles:
+        sorted_possibles.append(calculateSpaces(puzzle, possible))
+    sorted_possibles = sorted(sorted_possibles)
+    return sorted_possibles
+    # for choice in availables:
+    #     if puzzle[symmetrical_lookup[choice]] != '-':
+    #         continue
+    #     plc,ni,ad = placeBlockingSquaresSpacing(puzzle,num_blocks,availables,choice,False)
+    #     if isInvalid(plc):
+    #         continue
+    #     if not plc:
+    #         continue
+    #     if plc.count('#')>num_blocks:
+    #         continue
+    #     return bruteForce(plc,num_blocks,availables-set(ni))
 def bruteForce(puzzle,num_blocks,availables):
     '''
     If it is good, do it
@@ -471,6 +513,7 @@ def bruteForce(puzzle,num_blocks,availables):
     '''
     if puzzle.count('#')==num_blocks:
         return puzzle
+    # sorted_availables = [()]
     for choice in availables:
         if puzzle[symmetrical_lookup[choice]] != '-':
             continue
@@ -593,6 +636,7 @@ if __name__ == "__main__":
     
     availables={i for i in range(len(puzzle)) if puzzle[i]=='-' and puzzle[symmetrical_lookup[i]]=='-'}
     bF = bruteForce(puzzle,num_squares,availables)   
+    print(calculateSpaces(bF,6))
     # print(bF.count('#'))
     # availables = {i for i in range(h*w) if puzzle[i]=='-' and puzzle[symmetrical_lookup[i]]=='-'}
     # final_puzzle = placeBlockingSquares(puzzle,num_blocks,availables)
@@ -600,6 +644,9 @@ if __name__ == "__main__":
     print(printPuzzle(bF,h,w,0))
     print()
     fillInWordsHorizontally(bF)
+
+    print(place_words_with_bruteforce(puzzle,availables))
+    
     # print(wordSearch('-A-'))
     # print(printPuzzle(runRoute(''.join(['-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '#', '#', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-']),3,9),10,13,0))
     # print(seedStringBreakdown('h6x0'))
