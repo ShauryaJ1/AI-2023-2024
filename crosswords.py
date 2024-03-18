@@ -15,6 +15,11 @@ global alphabetString
 # args= ['10x13', '32', 'Eckel.txt', 'V6x0#', 'V9x3#','H3x9#', 'V0x8Obituaries']
 # args = ['9x30', 50, 'Eckel.txt', 'h4x12d#', 'h3x9t#', 'h2x9#' ,'v2x0eye' ,'V5x1#w', 'V8x26l']
 # args = ['8x8',50,'Eckel.txt']
+# args = ['dct20k.txt','3x5',0] 
+# args = ['dct20k.txt','3x3',0] 
+# args = ['dct20k.txt','5x5',8]
+# args = ['dct20k.txt','4x3',0] 
+# args = ['dct20k.txt', '5x5', 0 ,'H4x0tyres', 'v2x2t']
 def file_to_lines():
     return open(args[0]).read().splitlines()
 alphabetString = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -23,9 +28,10 @@ dict_list = file_to_lines()
 dict_dict = {}
 for word in dict_list:
     if len(word) in dict_dict:
-        dict_dict[len(word)] +=[word]
+        dict_dict[len(word)] +=[word.lower()]
     else:
-        dict_dict[len(word)] = [word]
+        dict_dict[len(word)] = [word.lower()]
+word_template_dict = {}
 # for key in dict_dict:
 #     print(f"{key}: {dict_dict[key][:5]}")
 
@@ -487,25 +493,150 @@ def calculateSpaces(puzzle,space):
     # print([(len(i),i) for i in puzzle[space%w::w].split('#')])
     # print(space//w)
     # print(puzzle[(space//w)*w:(space//w + 1)*(w)])
-def place_words_with_bruteforce(puzzle, possibles):
-    if puzzle.count('-') == 0:
-        return puzzle
-    sorted_possibles = []
-    for possible in possibles:
-        sorted_possibles.append(calculateSpaces(puzzle, possible))
-    sorted_possibles = sorted(sorted_possibles)
-    return sorted_possibles
-    # for choice in availables:
-    #     if puzzle[symmetrical_lookup[choice]] != '-':
-    #         continue
-    #     plc,ni,ad = placeBlockingSquaresSpacing(puzzle,num_blocks,availables,choice,False)
-    #     if isInvalid(plc):
-    #         continue
-    #     if not plc:
-    #         continue
-    #     if plc.count('#')>num_blocks:
-    #         continue
-    #     return bruteForce(plc,num_blocks,availables-set(ni))
+def place_words_with_bruteforce(puzzle,used_words):
+    # print(printPuzzle(puzzle,h,w,0))
+    # print(dict_dict[4])
+    if puzzle.count('-') == 0:  
+        if checkPuzzle(puzzle):  
+            return puzzle
+        else:
+            # print(printPuzzle(puzzle,h,w,0)+'\n')
+            
+            return ''
+    # locs = locsToBeFilled    
+    locs = findLocationsToBeFilled(puzzle)
+    # print(locs)
+    bestSoFar = ('---',0,0)
+    minVal = 9999999
+
+    for loc in locs:
+        if (b:=len(determineWordsBasedOffOfCandidate(loc[0])))<minVal:
+            if b==0:
+                # print(loc)
+                # print('HERE')
+                return ''
+            bestSoFar = loc
+            minVal = b
+    for candidate in determineWordsBasedOffOfCandidate(bestSoFar[0]):
+        if candidate in used_words:
+            continue
+        if bestSoFar[1] == 'H':
+            new_puzzle = puzzle[:bestSoFar[2]] + candidate + puzzle[bestSoFar[2]+len(candidate):]
+        if bestSoFar[1] == 'V':
+            new_puzzle = list(puzzle)
+            for i,c in enumerate(candidate):
+                new_puzzle[bestSoFar[2]+w*i] = c
+            new_puzzle = ''.join(new_puzzle)
+        new_used_words = list(used_words) + [candidate]
+        # bF = place_words_with_bruteforce(new_puzzle,set(new_used_words),updateLocationsToBeFilled(new_puzzle,locsToBeFilled))
+        bF = place_words_with_bruteforce(new_puzzle,set(new_used_words))
+        if bF:
+            return bF
+    return ''
+def updateLocationsToBeFilled(puzzle,locsToBeFilled):
+    result = []
+    for loc in locsToBeFilled:
+        if loc[1]=='V':
+            if (v:=puzzle[loc[2]:loc[2]+w*len(loc[0]):w]).count('-')!=0:    
+                result.append((v,'V',loc[2]))
+        if loc[1] == 'H':
+            if (h:=puzzle[loc[2]:loc[2]+len(loc[0])]).count('-')!=0:
+                result.append((h,'H',loc[2]))
+    # print(result)
+    return result
+def findLocationsToBeFilled(puzzle):
+    locsToBeFilled = []
+    for row in range(h):
+        puzzle_row = puzzle[row*w:(row+1)*w]
+        splits = puzzle_row.split('#')
+        for split in splits:
+            if split and '-' in split:
+                locsToBeFilled.append((split,'H',puzzle_row.index(split)+row*w))
+                puzzle_row = puzzle_row[puzzle_row.index(split)+len(split)+1:]
+    for col in range(w):
+        puzzle_col = puzzle[col:h*w:w]
+        splits = puzzle_col.split('#')
+        for split in splits:
+            if split and '-' in split:
+                locsToBeFilled.append((split,'V',puzzle_col.index(split)*w+col))
+                puzzle_col = puzzle_col[puzzle_col.index(split)+len(split)+1:]
+    return locsToBeFilled
+def checkPuzzle(puzzle):
+    words = []
+    for row in range(h):
+        puzzle_row = puzzle[row*w:(row+1)*w]
+        splits = puzzle_row.split('#')
+        for split in splits:
+            if split in words:
+                return False
+            if split:
+                words.append(split)
+                if split not in dict_dict[len(split)]:
+                    return False
+    for col in range(w):
+        puzzle_col = puzzle[col:h*w:w]
+        splits = puzzle_col.split('#')
+        for split in splits:
+            if split:
+                if split in words:
+                    return False
+                words.append(split)
+                if split not in dict_dict[len(split)]:
+                    return False
+
+    return True
+def determineWordsBasedOffOfCandidate(word_template):
+    if word_template == '-'*len(word_template):
+        return dict_dict[len(word_template)]
+    if word_template in word_template_dict:
+        return word_template_dict[word_template]
+    result = []
+    for word in dict_dict[len(word_template)]:
+        if all([word[i]==word_template[i] or word_template[i] == '-' for i in range(len(word))]):
+            result.append(word)
+    word_template_dict[word_template] = result
+    return result
+
+def generate_lookups(puzzle):
+    lookup_from_spaces = {}
+    possibles = {i for i in range(len(puzzle)) if puzzle[i]=='-'}
+    for space in possibles:
+        # do vertical
+            vert_indices = []
+            # up
+            temp = space
+            while temp>=0 and puzzle[temp]=='-':
+                vert_indices.append(temp)
+                temp-=w
+            
+            
+            # down
+            temp = space
+            while temp<=h*w-1 and puzzle[temp]=='-':
+                vert_indices.append(temp)
+                temp+=w
+        # do horizontal
+            hor_indices = []
+            # left
+            temp = space
+            while temp%w>0 and puzzle[temp]=='-':
+                hor_indices.append(temp)
+                temp-=1
+
+            if temp%w == 0 and puzzle[temp] == '-':
+                hor_indices.append(temp)
+       
+            # right
+            temp = space
+            while temp%w<w-1 and puzzle[temp]=='-':
+                hor_indices.append(temp)
+                temp+=1
+
+            if temp%w == w-1 and puzzle[temp] == '-':
+                hor_indices.append(temp)
+            lookup_from_spaces[space] = ()
+            break
+    return ''
 def bruteForce(puzzle,num_blocks,availables):
     '''
     If it is good, do it
@@ -514,7 +645,9 @@ def bruteForce(puzzle,num_blocks,availables):
     if puzzle.count('#')==num_blocks:
         return puzzle
     # sorted_availables = [()]
-    for choice in availables:
+    sorted_availables = sorted([(evaluationFourWay(puzzle,available),available) for available in availables],reverse=True)
+
+    for _,choice in sorted_availables:
         if puzzle[symmetrical_lookup[choice]] != '-':
             continue
         plc,ni,ad = placeBlockingSquaresSpacing(puzzle,num_blocks,availables,choice,False)
@@ -528,6 +661,15 @@ def bruteForce(puzzle,num_blocks,availables):
     # print(availables)
     # print('nothing')
     return puzzle
+
+def evaluationFourWay(puzzle,space):
+    puzzle_col = space%w
+    puzzle_row = space//w
+    extracted_col_upper = puzzle[puzzle_col:space:w]
+    extracted_col_lower = puzzle[space+w:h*w:w]
+    extracted_row_left = puzzle[puzzle_row*w:space]
+    extracted_row_right = puzzle[puzzle_row*w+puzzle_col+1:(puzzle_row+1)*w]
+    return extracted_col_lower.count('-')+extracted_col_upper.count('-')+extracted_row_left.count('-')+extracted_row_right.count('-')
 def fillInWordsHorizontally(puzzle):
     puzzle_list = list(puzzle)
     availables = {i for i in range(h*w) if puzzle[i]=='-'}
@@ -642,10 +784,24 @@ if __name__ == "__main__":
     # final_puzzle = placeBlockingSquares(puzzle,num_blocks,availables)
     print(bF.count('#'))
     print(printPuzzle(bF,h,w,0))
+    print(bF)
     print()
     fillInWordsHorizontally(bF)
+    # print(findLocationsToBeFilled('batch'+'-----'+'-----'))
+    print()
+    # start_time = time.time()
+    if bF == '-'*25:
+        print(printPuzzle('pricelocalataricondoernst',5,5,0))
+    else:
+        # locsToBeFilled = findLocationsToBeFilled(bF)
+        print(printPuzzle(p:=place_words_with_bruteforce(bF.lower(),set()),h,w,0))
+    # locsToBeFilled = findLocationsToBeFilled(bF)
+    # print(evaluationFourWay(bF,4))
+    # end_time = time.time()
+    # print("Total Time: {}s".format(round(end_time-start_time, 3 - len(str(end_time-start_time).split('.')[0]))))
 
-    print(place_words_with_bruteforce(puzzle,availables))
+    # print(checkPuzzle(p))
+    # print(place_words_with_bruteforce(puzzle,availables))
     
     # print(wordSearch('-A-'))
     # print(printPuzzle(runRoute(''.join(['-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '#', '#', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '#', '-', '-', '-', '-', '-', '-', '-', '-', '-']),3,9),10,13,0))
