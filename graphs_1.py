@@ -1,7 +1,55 @@
 import sys; args = sys.argv[1:]
 import math
 import re
+def parseCommaSplices(esplits,graph_ds):
+    size_list  = [i for i in range(int(graph_ds[1]))]
+    vertices = []
+    for esplit in esplits:
+                if esplit.count(':')==0:
+                    vertices.append(size_list[int(esplit)])
+                    
+                if esplit.count(':')==1:
+                    if esplit == ':':
+                        
+                        vertices+=size_list
+                    elif esplit[-1]==':':
+                        
+                        vertices+=size_list[int(esplit[:esplit.index(':')]):]
+                    elif esplit[0] == ':':
+                        
+                        vertices+=size_list[:int(esplit[esplit.index(':')+1:])]
+                    else:
+                        
+                        vertices+=size_list[size_list[int(esplit[:esplit.index(':')])]:int(esplit[esplit.index(':')+1:])]
+                if esplit.count(':')==2:
+                    esplit_splits = esplit.split(':')
+                    if not any(esplit_splits):
+                         
+                         vertices+=size_list
+                    elif(esplit_splits[0] =='' and esplit_splits[2]==''):
+                         
+                         vertices+=size_list[:int(esplit_splits[1]):]
+                    elif(esplit_splits[1] =='' and esplit_splits[2]==''):
+                        
+                        vertices+=size_list[int(esplit_splits[0])::]
+                    elif(esplit_splits[1] =='' and esplit_splits[0]==''):
+                        
+                        vertices+=size_list[::int(esplit_splits[2])]
+                    elif(esplit_splits[0]==''):
+                        
+                        vertices+=size_list[:int(esplit_splits[1]):int(esplit_splits[2])]
+                    elif(esplit_splits[1]==''):
+                         
+                         vertices+=size_list[int(esplit_splits[0])::int(esplit_splits[2])]
+                    elif(esplit_splits[2]==''):
+                        
+                        vertices+=size_list[int(esplit_splits[0]):int(esplit_splits[1]):]
+                    else:
+                        
+                        vertices+=size_list[int(esplit_splits[0]):int(esplit_splits[1]):int(esplit_splits[2])]
+    return vertices
 def checkAdd(edge, graph_ds):
+    
     if edge[0] not in graph_ds[4][edge[1]]:
         graph_ds[4][edge[1]].append(edge[0])
     if edge[1] not in graph_ds[4][edge[0]]:
@@ -13,6 +61,58 @@ def checkRemove(edge, graph_ds):
     if edge[1] in graph_ds[4][edge[0]]:
         graph_ds[4][edge[0]].remove(edge[1])
     return graph_ds
+def modifyEPropsFormOne(ePropsdict,graph_ds,edges,reward,direction,management_type):
+    if management_type=='~':
+        for edge in edges:
+            if edge in ePropsdict:
+                del ePropsdict[edge]
+                graph_ds = checkRemove(edge,graph_ds)
+            else:
+                if reward:
+                    ePropsdict[edge] = {'rwd':reward}
+                    graph_ds = checkAdd(edge,graph_ds)
+                else:
+                   
+                    ePropsdict[edge] = {}
+                    graph_ds = checkAdd(edge,graph_ds)
+    elif management_type=='!':
+        for edge in edges:
+            if edge in ePropsdict:
+                del ePropsdict[edge]
+                graph_ds = checkRemove(edge,graph_ds)
+    elif management_type=='+':
+        
+        for edge in edges:
+            if edge not in ePropsdict:
+                if reward:
+                    ePropsdict[edge] = {'rwd':reward}
+                    graph_ds = checkAdd(edge,graph_ds)
+                else:
+                    ePropsdict[edge] = {}
+                    graph_ds = checkAdd(edge,graph_ds)
+    elif management_type=='*':
+        for edge in edges:
+            if edge not in ePropsdict:
+                if reward:
+                    ePropsdict[edge] = {'rwd':reward}
+                    graph_ds = checkAdd(edge,graph_ds)
+                else:
+                    ePropsdict[edge] = {}
+                    graph_ds = checkAdd(edge,graph_ds)
+            else:
+                if reward:
+                    ePropsdict[edge] = {'rwd':reward}
+                else:
+                    ePropsdict[edge] = {}
+    elif management_type=='@':
+        for edge in edges:
+            if edge in ePropsdict:
+                if reward:
+                    ePropsdict[edge] = {'rwd':reward}
+                else:
+                    ePropsdict[edge] = {}
+
+    return ePropsdict,graph_ds
 def modifyEProps(ePropsdict,graph_ds,n_e_w_s,vertex,reward,direction,management_type):
     edges = []
     if 'N' in n_e_w_s:
@@ -86,6 +186,37 @@ def modifyEProps(ePropsdict,graph_ds,n_e_w_s,vertex,reward,direction,management_
     return ePropsdict,graph_ds
 
 def form_one(ePropsdict,graph_ds,directive):
+    size_list = [i for i in range(int(graph_ds[1]))]
+    mngmnt = {'!','+','*','~','@'}
+    directionality =''
+    reward = ''
+    eslc = directive
+    if 'R' in eslc:
+                 
+                 if r:=re.search('R\d+',eslc):
+                         reward = int(r.group()[1:])
+                 else:
+                       reward = graph_ds[3]
+                 eslc = eslc[:eslc.index('R')]
+    management_type = '~'
+    if eslc[0] in mngmnt:
+        management_type = eslc[0]
+        eslc = eslc[1:]
+    # print(eslc,management_type,reward)
+    
+    if '=' in eslc:
+        directionality = '='
+    else:
+        directionality = '~'
+    sides = eslc.split(directionality)
+    
+    edges = [i for i in zip(parseCommaSplices(sides[0].split(','),graph_ds),parseCommaSplices(sides[1].split(','),graph_ds))]
+    if directionality == '=':
+        to_add = []
+        for edge in edges:
+            to_add.append((edge[1],edge[0]))
+        edges+=to_add
+    ePropsdict,graph_ds = modifyEPropsFormOne(ePropsdict,graph_ds,edges,reward,directionality,management_type)
     return ePropsdict,graph_ds
 def form_two(ePropsdict,graph_ds,directive):
     size_list = [i for i in range(int(graph_ds[1]))]
@@ -116,49 +247,7 @@ def form_two(ePropsdict,graph_ds,directive):
     n_e_w_s = eslc[idx:stop]
     vertices = []
     # print(eslc)
-    for esplit in esplits:
-                if esplit.count(':')==0:
-                    vertices.append(size_list[int(esplit)])
-                    
-                if esplit.count(':')==1:
-                    if esplit == ':':
-                        
-                        vertices+=size_list
-                    elif esplit[-1]==':':
-                        
-                        vertices+=size_list[int(esplit[:esplit.index(':')]):]
-                    elif esplit[0] == ':':
-                        
-                        vertices+=size_list[:int(esplit[esplit.index(':')+1:])]
-                    else:
-                        
-                        vertices+=size_list[size_list[int(esplit[:esplit.index(':')])]:int(esplit[esplit.index(':')+1:])]
-                if esplit.count(':')==2:
-                    esplit_splits = esplit.split(':')
-                    if not any(esplit_splits):
-                         
-                         vertices+=size_list
-                    elif(esplit_splits[0] =='' and esplit_splits[2]==''):
-                         
-                         vertices+=size_list[:int(esplit_splits[1]):]
-                    elif(esplit_splits[1] =='' and esplit_splits[2]==''):
-                        
-                        vertices+=size_list[int(esplit_splits[0])::]
-                    elif(esplit_splits[1] =='' and esplit_splits[0]==''):
-                        
-                        vertices+=size_list[::int(esplit_splits[2])]
-                    elif(esplit_splits[0]==''):
-                        
-                        vertices+=size_list[:int(esplit_splits[1]):int(esplit_splits[2])]
-                    elif(esplit_splits[1]==''):
-                         
-                         vertices+=size_list[int(esplit_splits[0])::int(esplit_splits[2])]
-                    elif(esplit_splits[2]==''):
-                        
-                        vertices+=size_list[int(esplit_splits[0]):int(esplit_splits[1]):]
-                    else:
-                        
-                        vertices+=size_list[int(esplit_splits[0]):int(esplit_splits[1]):int(esplit_splits[2])]
+    vertices = parseCommaSplices(esplits,graph_ds)
     for vertex in vertices:
         ePropsdict,graph_ds = modifyEProps(ePropsdict,graph_ds,n_e_w_s,vertex,reward,eslc[stop],management_type)
 
@@ -234,7 +323,7 @@ def grfParse(lstArgs):
         newly_added = []
         ls = []
         blocked_list = []
-        # old_blocked_set = set(blocked_list)
+        # old_blocked_set = )
         if 'E' in directive:
             
             eslc = directive[1:]
@@ -350,7 +439,9 @@ def grfParse(lstArgs):
         to_remove = []
         for b in blocked_set:
             for key in ePropsdict:
-                if b in key:
+                if b==key[0] and key[1] not in blocked_set:
+                    to_remove.append(key)
+                if b==key[1] and key[0] not in blocked_set:
                     to_remove.append(key)
         for r in to_remove:
             if r in ePropsdict:
