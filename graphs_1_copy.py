@@ -48,20 +48,22 @@ def parseCommaSplices(esplits,graph_ds):
                         
                         vertices+=size_list[int(esplit_splits[0]):int(esplit_splits[1]):int(esplit_splits[2])]
     return vertices
-def checkAdd(edge, graph_ds,ePropsdict):
-    
-    if edge[0] not in graph_ds[4][edge[1]] and (edge[1],edge[0]) in ePropsdict:
-        graph_ds[4][edge[1]].append(edge[0])
-    if edge[1] not in graph_ds[4][edge[0]] and (edge[0],edge[1]) in ePropsdict:
-
+def checkAdd(edge, graph_ds,direction):
+    if edge[1] not in graph_ds[4][edge[0]]:
         graph_ds[4][edge[0]].append(edge[1])
+    if direction == '=':
+        if edge[0] not in graph_ds[4][edge[1]]:
+            graph_ds[4][edge[1]].append(edge[0])
+    
     return graph_ds
-def checkRemove(edge, graph_ds,ePropsdict):
-
-    if edge[0] in graph_ds[4][edge[1]] and (edge[1],edge[0]) not in ePropsdict:
-        graph_ds[4][edge[1]].remove(edge[0])
+def checkRemove(edge, graph_ds,ePropsdict,direction):
     if edge[1] in graph_ds[4][edge[0]] and (edge[0],edge[1]) not in ePropsdict:
         graph_ds[4][edge[0]].remove(edge[1])
+    if direction == '=':
+        if edge[0] in graph_ds[4][edge[1]] and (edge[1],edge[0]) not in ePropsdict:
+            graph_ds[4][edge[1]].remove(edge[0])
+    
+    
     return graph_ds
 def modifyEPropsFormOne(ePropsdict,graph_ds,edges,reward,direction,management_type):
     
@@ -70,39 +72,39 @@ def modifyEPropsFormOne(ePropsdict,graph_ds,edges,reward,direction,management_ty
         for edge in set(edges):
             if edge in ePropsdict:
                 del ePropsdict[edge]
-                graph_ds = checkRemove(edge,graph_ds,ePropsdict)
+                graph_ds = checkRemove(edge,graph_ds,ePropsdict,direction)
             else:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds,direction)
                 else:
                    
                     ePropsdict[edge] = {}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds,direction)
     elif management_type=='!':
         for edge in set(edges):
             if edge in ePropsdict:
                 del ePropsdict[edge]
-                graph_ds = checkRemove(edge,graph_ds,ePropsdict)
+                graph_ds = checkRemove(edge,graph_ds,ePropsdict,direction)
     elif management_type=='+':
         
         for edge in set(edges):
             if edge not in ePropsdict:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds,direction)
                 else:
                     ePropsdict[edge] = {}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds,direction)
     elif management_type=='*':
         for edge in set(edges):
             if edge not in ePropsdict:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds,direction)
                 else:
                     ePropsdict[edge] = {}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds,direction)
             else:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
@@ -129,7 +131,7 @@ def modifyEProps(ePropsdict,graph_ds,n_e_w_s,vertex,reward,direction,management_
         if vertex%graph_ds[2]!=0 and 0<=vertex-1<graph_ds[1]:
             edges.append((vertex,vertex-1))
     if 'S' in n_e_w_s:
-        if vertex+graph_ds[2]<graph_ds[1]:
+        if 0<=vertex+graph_ds[2]<graph_ds[1]:
             edges.append((vertex,vertex+graph_ds[2]))
     if direction == '=':
         
@@ -137,44 +139,43 @@ def modifyEProps(ePropsdict,graph_ds,n_e_w_s,vertex,reward,direction,management_
         for edge in set(edges):
             to_add.append((edge[1],edge[0]))
         edges+=to_add
-    
+    # print(edges)
     if management_type=='~':
-        print(management_type)
         for edge in set(edges):
             if edge in ePropsdict:
                 del ePropsdict[edge]
-                graph_ds = checkRemove(edge,graph_ds,ePropsdict)
+                graph_ds = checkRemove(edge,graph_ds,ePropsdict,direction)
             else:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds,direction)
                 else:
                     ePropsdict[edge] = {}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds,direction)
     elif management_type=='!':
         for edge in set(edges):
             if edge in ePropsdict:
                 del ePropsdict[edge]
-                graph_ds = checkRemove(edge,graph_ds,ePropsdict)
+                graph_ds = checkRemove(edge,graph_ds,ePropsdict,direction)
     elif management_type=='+':
         
         for edge in set(edges):
             if edge not in ePropsdict:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds,direction)
                 else:
                     ePropsdict[edge] = {}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds,direction)
     elif management_type=='*':
         for edge in set(edges):
             if edge not in ePropsdict:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds,direction)
                 else:
                     ePropsdict[edge] = {}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds,direction)
             else:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
@@ -338,108 +339,89 @@ def grfParse(lstArgs):
             
             else:
                 ePropsdict,graph_ds = form_one(ePropsdict,graph_ds,eslc)
+
+
+        '''
+        For blocking 
+        Identify jumps
+        get rid of them first
+        then toggle all default edges
+        have a set of vertices W which is vertices you are working with
+        Have a set of verticeds X = V-W
+
+        Regex "^V([-\d:,]+)((R\d*)?|([B])?)*$"
+        '''
         if directive[0] == 'V':
-            
-            vslcs = directive[1:]
-            # print(vslcs)
-            splits = vslcs.split(',')
-            # print(splits)
-            for vsplit in splits:
-                ls = []
-                if 'R' in vsplit:
-                    ls.append(vsplit.index('R'))
-                    if r:=re.search(regex_3,vsplit):
-                         reward = int(r.group()[1:])
+            reward = ''
+            blocking = False
+            breakdown_regex = "^V([-\d:,]+)((R\d*)?|([B])?)*$"
+            if m:=re.search(breakdown_regex,directive):
+                if v:=m.group(1):
+                    vslc = v
+                if r:=m.group(3):
+                    if r=="R":
+                        reward = graph_ds[3]
                     else:
-                       reward = graph_ds[3]
-                    
-                if 'B' in vsplit:
-                    ls.append(vsplit.index('B'))
-                if ls:
-                     vslc= vsplit[:min(ls)]
-                else:
-                    vslc = vsplit[:]
-                newly_added = parseCommaSplices([vslc],graph_ds)
-
-                graph_ds[-1]+=newly_added
+                        reward = int(r[1:])
+                if m.group(4):
+                    blocking = True
                 
-        # blocked_set = set(blocked_list)
-                if reward !='':
-                    for node in newly_added:
-                        # print(node)
-                        vPropsDict[node] = {'rwd':reward}
+            # print(vslcs)
+            splits = vslc.split(',')
+            # print(splits)
+            
+            vertices = parseCommaSplices(splits,graph_ds)
+            if reward!='':
+                    for vertex in vertices:
+                            vPropsDict[vertex] = {'rwd':reward}
+            if blocking:
 
-                newly_added_set  = set(newly_added)
-                to_remove = []
-                for n in newly_added:
-                    if n in blocked_set:
-                        to_remove.append(n)
-                for i in to_remove:
-                    blocked_set.remove(i)
-                    newly_added_set.remove(i)
-                    if i%graph_ds[2]!=0:
-                        graph_nbrs[i].append(i-1)
-                        graph_nbrs[i-1].append(i)
-                        graph_ds[-2][i].append(i-1)
-                        graph_ds[-2][i-1].append(i)
-                        ePropsdict[(i,i-1)] = {}
-                        ePropsdict[(i-1,i)] = {}
-                    if i%graph_ds[2]!=graph_ds[2]-1:
-                        graph_nbrs[i].append(i+1)
-                        graph_nbrs[i+1].append(i)
-                        graph_ds[-2][i].append(i+1)
-                        graph_ds[-2][i+1].append(i)
-                        ePropsdict[(i,i+1)] = {}
-                        ePropsdict[(i+1,i)] = {}
-                    if i//graph_ds[2]!=0:
-                        graph_nbrs[i].append(i-graph_ds[2])
-                        graph_nbrs[i-graph_ds[2]].append(i)
-                        graph_ds[-2][i].append(i-graph_ds[2])
-                        graph_ds[-2][i-graph_ds[2]].append(i)
-                        ePropsdict[(i,i-graph_ds[2])] = {}
-                        ePropsdict[(i-graph_ds[2],i)] = {}
-                    if i//graph_ds[2]!=(graph_ds[1]//graph_ds[2])-1:
-                        graph_nbrs[i].append(i+graph_ds[2])
-                        graph_nbrs[i+graph_ds[2]].append(i)
-                        graph_ds[-2][i].append(i+graph_ds[2])
-                        graph_ds[-2][i+graph_ds[2]].append(i)
-                        ePropsdict[(i,i+graph_ds[2])] = {}
-                        ePropsdict[(i+graph_ds[2],i)] = {}
-                blocked_set = blocked_set.union(newly_added_set)
-                to_remove = []
-                for b in newly_added_set:
-                    for key in ePropsdict:
-                        if b==key[0] and key[1] not in blocked_set:
-                            to_remove.append(key)
-                        if b==key[1] and key[0] not in blocked_set:
-                            to_remove.append(key)
-                for r in to_remove:
-                    if r in ePropsdict:
-                        del ePropsdict[r]
-                    if (r[1],r[0]) in ePropsdict:
-                        del ePropsdict[(r[1],r[0])]
-            # blocked_list  = list(blocked_set)
-        # blocked_set = set(blocked_list)
-        # print(blocked_set)
-        # print(blocked_list)
-                for idx in newly_added_set:
-                    # if blocked_list.count(idx)%2==0:
-                    #     continue
-                    for i,nbr_array in enumerate(graph_ds[-2]):
-                        if i==idx:
-                            # print(nbr_array)
-                            to_remove = []
-                            for n in nbr_array:
-                                # print(n)
-                                if n not in blocked_set:
-                                    to_remove.append(n)
-                                    # graph_ds[-2][i].remove(n)
-                            for r in to_remove:
-                                graph_ds[-2][i].remove(r)
-                        if idx in nbr_array and i not in blocked_set:
-                            graph_ds[-2][i].remove(idx)
-    
-    
+                    for vertex in set(vertices):
+                        north_south_east_west = []
+                        if graph_ds[1]>vertex-graph_ds[2]>=0:
+                            north_south_east_west.append(vertex-graph_ds[2])
+                        if vertex%graph_ds[2]!=graph_ds[2]-1 and 0<=vertex+1<graph_ds[1]:
+                            north_south_east_west.append(vertex+1)
+                        if vertex%graph_ds[2]!=0 and 0<=vertex-1<graph_ds[1]:
+                            north_south_east_west.append(vertex-1)
+                        if 0<=vertex+graph_ds[2]<graph_ds[1]:
+                            north_south_east_west.append(vertex+graph_ds[2])
+                        jumps = []
+                        for nbr in graph_nbrs[vertex]:
+                            if nbr not in north_south_east_west:
+                                jumps.append((vertex,nbr))
+                        # print(jumps)
+                        for jump in jumps:
+                            if jump in ePropsdict:
+                                del ePropsdict[jump]
+                                graph_ds = checkRemove(jump,graph_ds,ePropsdict,'=')
+                        
+                        # ePropsdict,graph_ds = modifyEProps(ePropsdict,graph_ds,'NEWS',vertex,'','=',management_type='~')
+
+                        s_edges = []
+                        if graph_ds[1]>vertex-graph_ds[2]>=0:
+                            s_edges.append((vertex,vertex-graph_ds[2]))
+                        if vertex%graph_ds[2]!=graph_ds[2]-1 and 0<=vertex+1<graph_ds[1]:
+                            s_edges.append((vertex,vertex+1))
+                        if vertex%graph_ds[2]!=0 and 0<=vertex-1<graph_ds[1]:
+                            s_edges.append((vertex,vertex-1))
+                        if vertex+graph_ds[2]<graph_ds[1]:
+                            s_edges.append((vertex,vertex+graph_ds[2]))
+                        if vertex == 12:
+                            print(s_edges)
+                        for edge in set(s_edges):
+                            if edge in ePropsdict:
+                                del ePropsdict[edge]
+                                graph_ds = checkRemove(edge,graph_ds,ePropsdict,'=')
+                                if (edge[1],edge[0]) in ePropsdict:
+                                    del ePropsdict[(edge[1],edge[0])]
+                                    graph_ds = checkRemove((edge[1],edge[0]),graph_ds,ePropsdict,'=')
+                            else:
+                                if (edge[1],edge[0]) not in ePropsdict:
+                                    ePropsdict[edge] = {}
+                                    graph_ds = checkAdd(edge,graph_ds,'=')
+                                    ePropsdict[(edge[1],edge[0])] = {}
+                                    graph_ds = checkAdd((edge[1],edge[0]),graph_ds,'=')
             
             
             
@@ -514,10 +496,10 @@ def grfStrEdges(graph):
     for i,nbr in enumerate(nbrs):
         # print(nbr)
         symbol =''
-        if i+1 in nbr:
+        if i+1 in nbr and i%graph[0][2]!=graph[0][2]-1:
             # print('E added')
             symbol+='E'
-        if i-1 in nbr:
+        if i-1 in nbr and i%graph[0][2]!=0:
             symbol+='W'
         if i+graph[0][2] in nbr:
             # print('S added')
@@ -564,6 +546,7 @@ def m(args):
     if jumps:
         print('\n'.join(representation[i:i+graph[0][2]] for i in range(0,graph[0][1],graph[0][2])))
         print(jumps)
+
     elif representation:
         print('\n'.join(representation[i:i+graph[0][2]] for i in range(0,graph[0][1],graph[0][2])))
         

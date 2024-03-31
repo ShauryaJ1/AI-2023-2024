@@ -48,11 +48,11 @@ def parseCommaSplices(esplits,graph_ds):
                         
                         vertices+=size_list[int(esplit_splits[0]):int(esplit_splits[1]):int(esplit_splits[2])]
     return vertices
-def checkAdd(edge, graph_ds,ePropsdict):
-    
-    if edge[0] not in graph_ds[4][edge[1]] and (edge[1],edge[0]) in ePropsdict:
+def checkAdd(edge, graph_ds):
+    \
+    if edge[0] not in graph_ds[4][edge[1]]:
         graph_ds[4][edge[1]].append(edge[0])
-    if edge[1] not in graph_ds[4][edge[0]] and (edge[0],edge[1]) in ePropsdict:
+    if edge[1] not in graph_ds[4][edge[0]]:
 
         graph_ds[4][edge[0]].append(edge[1])
     return graph_ds
@@ -74,11 +74,11 @@ def modifyEPropsFormOne(ePropsdict,graph_ds,edges,reward,direction,management_ty
             else:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds)
                 else:
                    
                     ePropsdict[edge] = {}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds)
     elif management_type=='!':
         for edge in set(edges):
             if edge in ePropsdict:
@@ -90,19 +90,19 @@ def modifyEPropsFormOne(ePropsdict,graph_ds,edges,reward,direction,management_ty
             if edge not in ePropsdict:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds)
                 else:
                     ePropsdict[edge] = {}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds)
     elif management_type=='*':
         for edge in set(edges):
             if edge not in ePropsdict:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds)
                 else:
                     ePropsdict[edge] = {}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds)
             else:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
@@ -147,10 +147,10 @@ def modifyEProps(ePropsdict,graph_ds,n_e_w_s,vertex,reward,direction,management_
             else:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds)
                 else:
                     ePropsdict[edge] = {}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds)
     elif management_type=='!':
         for edge in set(edges):
             if edge in ePropsdict:
@@ -162,19 +162,19 @@ def modifyEProps(ePropsdict,graph_ds,n_e_w_s,vertex,reward,direction,management_
             if edge not in ePropsdict:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds)
                 else:
                     ePropsdict[edge] = {}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds)
     elif management_type=='*':
         for edge in set(edges):
             if edge not in ePropsdict:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds)
                 else:
                     ePropsdict[edge] = {}
-                    graph_ds = checkAdd(edge,graph_ds,ePropsdict)
+                    graph_ds = checkAdd(edge,graph_ds)
             else:
                 if reward:
                     ePropsdict[edge] = {'rwd':reward}
@@ -338,6 +338,18 @@ def grfParse(lstArgs):
             
             else:
                 ePropsdict,graph_ds = form_one(ePropsdict,graph_ds,eslc)
+
+
+        '''
+        For blocking 
+        Identify jumps
+        get rid of them first
+        then toggle all default edges
+        have a set of vertices W which is vertices you are working with
+        Have a set of verticeds X = V-W
+
+        Regex "^V([-\d:,]+)((R\d*)?|([B])?)*$"
+        '''
         if directive[0] == 'V':
             
             vslcs = directive[1:]
@@ -564,8 +576,6 @@ def grfStrEdges(graph):
     jumps = jumps[:-1]
     # print(0 + graph[0][2] in [1,5])
     # print(graph[0][-2])
-    if jumps:
-        jumps = 'Jumps:'+jumps
     return representation+'\n'+jumps
 
 def grfStrProps(graph):
@@ -583,24 +593,7 @@ def grfStrProps(graph):
         if 'rwd' in graph[3][key]:
             res+='\n'+f"({key[0]},{key[1]}):rwd:{graph[3][key]['rwd']}"
     return res
-def m(args):
-    graph = grfParse(args)
-    # print(graph)
-    size = grfSize(graph)
-    properties = grfGProps(graph)
-    representation  = grfStrEdges(graph)
-    # print(grfNbrs(graph,1))
-    jumps = ''
-    if 'Jumps' in representation:
-        jumps = representation[representation.index('Jumps'):]
-        representation = representation[:representation.index('Jumps')]
-    if jumps:
-        print('\n'.join(representation[i:i+graph[0][2]] for i in range(0,graph[0][1],graph[0][2])))
-        print(jumps)
-    elif representation:
-        print('\n'.join(representation[i:i+graph[0][2]] for i in range(0,graph[0][1],graph[0][2])))
-        
-    print(grfStrProps(graph))
+
 def main():
     graph = grfParse(args)
     # print(graph)
