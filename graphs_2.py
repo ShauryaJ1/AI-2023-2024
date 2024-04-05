@@ -532,30 +532,50 @@ def grfStrProps(graph):
         if 'rwd' in graph[3][key]:
             res+='\n'+f"({key[0]},{key[1]}):rwd:{graph[3][key]['rwd']}"
     return 
-def BFS(graph,v):
-    if grfVProps(graph,v) != {}: return {v:v}, v
+def BFS(graph,v,north_south_east_west_lookup):
+    if grfVProps(graph,v) != {}: return [v],[]
     parseMe = [v]
-    dctSeen = {}
+    dctSeen = {v:''}
+    visited_edges = []
     while parseMe:
         node = parseMe.pop(0)
         for nbr in grfNbrs(graph,node):
             if nbr not in dctSeen:
+                visited_edges.append((node,nbr))
                 if grfVProps(graph,nbr) != {} or grfEProps(graph,node,nbr) != {}:
                     dctSeen[nbr] = node
-                    return dctSeen,nbr
+                    
+                    return reconstruct_path(v,nbr,dctSeen,north_south_east_west_lookup)
+                    # return dctSeen,nbr
                 dctSeen[nbr] = node
                 parseMe.append(nbr)
+            else:
+                '''
+                check if ive visited the edge before
+
+                '''
+                if (node,nbr) not in visited_edges:
+                    visited_edges.append((node,nbr))
+                    if grfEProps(graph,node,nbr) != {}:
+                    
+                        r = reconstruct_path(v,nbr,dctSeen,north_south_east_west_lookup)
+                        return r[0] + [node] +[nbr], r[1]
+                        # return dctSeen,nbr
     return -1
-def reconstruct_path(start,goal,dctSeen):
+def reconstruct_path(start,goal,dctSeen,north_south_east_west_lookup):
+    jumps = []
     path_list = [goal]
     temp=goal
     while temp!=start:
         if temp in dctSeen:
+        
+            if dctSeen[temp] not in north_south_east_west_lookup[temp]:
+                jumps.append(f"{dctSeen[temp]}~{temp}")
             temp=dctSeen[temp]
             path_list.append(temp)
         else:
             return -1
-    return path_list
+    return path_list, jumps
 def m(args):
     graph = grfParse(args)
     # print(graph)
@@ -575,11 +595,11 @@ def m(args):
         print('\n'.join(representation[i:i+graph[0][2]] for i in range(0,graph[0][1],graph[0][2])))
         
     print(grfStrProps(graph))
-def main():
+def m2(args):
     graph = grfParse(args)
     # print(graph)
     symbol_dict = {'E':'E','W':'W','N':'N','S':'S','EN':'L','WN':'J','WSN':'<','WS':'7','EWN':'^','EWSN':'+','EWS':'v','ES':'r','ESN':'>','':'.','EW':'-','SN':'|'}
-
+    jumps = []
     res = ''
     north_south_east_west_lookup  = {}
     for i in range(graph[0][1]):
@@ -593,21 +613,29 @@ def main():
         if i%graph[0][2]!=graph[0][2]-1:
             north_south_east_west_lookup[i].append(i+1)
     for i,nbrs in enumerate(graph[0][-2]):
+        
         if grfVProps(graph,i) == {}:
             nbr_paths = {}
             for nbr in nbrs:
-                if (b:=BFS(graph,nbr)) != -1:
+                if grfEProps(graph,i,nbr) != {}:
+                    nbr_paths[nbr] = [nbr]
+                elif (b:=BFS(graph,nbr,north_south_east_west_lookup)) != -1:
                     
                     
-                    nbr_paths[nbr] = reconstruct_path(nbr,b[1],b[0])
-            
+                    nbr_paths[nbr],t_jumps = b
+                    # print(i,nbr, nbr_paths[nbr])
+                    jumps+=t_jumps
+
             if nbr_paths=={}:
                 res+='.'
             else:
                 symbol = ''
                 min_path_len = min(len(path) for path in nbr_paths.values())
                 for nbr in nbr_paths:
+                    
                     if len(nbr_paths[nbr])==min_path_len:
+                        if nbr not in north_south_east_west_lookup[i]:
+                            jumps.append(f"{i}~{nbr}")
                         if nbr == i+1 and nbr in north_south_east_west_lookup[i]:
                             symbol+='E'
                         if nbr == i-1 and nbr in north_south_east_west_lookup[i]:
@@ -631,12 +659,72 @@ def main():
     res = '\n'.join(res[i:i+graph[0][2]] for i in range(0,graph[0][1],graph[0][2]))
     print("Policy: ")
     print(res)
+    print(';'.join(set(jumps)))
+def main():
+    graph = grfParse(args)
+    # print(graph)
+    symbol_dict = {'E':'E','W':'W','N':'N','S':'S','EN':'L','WN':'J','WSN':'<','WS':'7','EWN':'^','EWSN':'+','EWS':'v','ES':'r','ESN':'>','':'.','EW':'-','SN':'|'}
+    jumps = []
+    res = ''
+    north_south_east_west_lookup  = {}
+    for i in range(graph[0][1]):
+        north_south_east_west_lookup[i] = []
+        if i-graph[0][2]>=0:
+            north_south_east_west_lookup[i].append(i-graph[0][2])
+        if i+graph[0][2]<graph[0][1]:
+            north_south_east_west_lookup[i].append(i+graph[0][2])
+        if i%graph[0][2]!=0:
+            north_south_east_west_lookup[i].append(i-1)
+        if i%graph[0][2]!=graph[0][2]-1:
+            north_south_east_west_lookup[i].append(i+1)
+    
     for i,nbrs in enumerate(graph[0][-2]):
-        for nbr in nbrs:
-            if nbr not in north_south_east_west_lookup[i]:
-                print(f"{i}>{nbr}")   
-             
-            
+        
+        if grfVProps(graph,i) == {}:
+            nbr_paths = {}
+            for nbr in nbrs:
+                if grfEProps(graph,i,nbr) != {}:
+                    nbr_paths[nbr] = [nbr]
+                elif (b:=BFS(graph,nbr,north_south_east_west_lookup)) != -1:
+                    
+                    
+                    nbr_paths[nbr],t_jumps = b
+                    # print(i,nbr, nbr_paths[nbr])
+                    jumps+=t_jumps
+            if nbr_paths=={}:
+                res+='.'
+            else:
+                symbol = ''
+                min_path_len = min(len(path) for path in nbr_paths.values())
+                for nbr in nbr_paths:
+                    
+                    if len(nbr_paths[nbr])==min_path_len:
+                        if nbr not in north_south_east_west_lookup[i]:
+                            jumps.append(f"{i}~{nbr}")
+                        if nbr == i+1 and nbr in north_south_east_west_lookup[i]:
+                            symbol+='E'
+                        if nbr == i-1 and nbr in north_south_east_west_lookup[i]:
+                            symbol+='W'
+                        if nbr == i+graph[0][2] and nbr in north_south_east_west_lookup[i]:
+                            symbol+='S'
+                        if nbr == i-graph[0][2] and nbr in north_south_east_west_lookup[i]:
+                            symbol+='N'
+                key = ''
+                if 'E' in symbol:
+                    key+='E'
+                if 'W' in symbol:
+                    key+='W'
+                if 'S' in symbol:
+                    key+='S'
+                if 'N' in symbol:
+                    key+='N'
+                res+=symbol_dict[key]
+        else:
+            res+='*'
+    res = '\n'.join(res[i:i+graph[0][2]] for i in range(0,graph[0][1],graph[0][2]))
+    print("Policy: ")
+    print(res)
+    print(';'.join(set(jumps)))
             
     # print(graph[1][17])
 
