@@ -23,7 +23,6 @@ if __name__ == '__main__':
     for line in lines[:-1]:
         split_num = len(inputs)
         inputs = [transfer_function(dot_product(line[i:i+split_num],inputs),transferFunction) for i in range(0,len(line),split_num)]
-    inputs = [i for i in hadamard(inputs,lines[-1])]
-    print(' '.join([str(i) for i in inputs]))
+    print(' '.join([str(i) for i in [i for i in hadamard(inputs,lines[-1])]]))
 
 #Shaurya Jain, pd 3, 2025
