@@ -30,7 +30,6 @@ def main():
     else:
         edge_dict = {0:[],1:[]}
         for node in range(2,num_nodes):
-                print(node)
                 if node not in edge_dict:
                     edge_dict[node] = []
             
