@@ -93,7 +93,7 @@ def main():
     training_examples = make_training_examples(radius,arg_type)
     expected_values = [[example[-1]] for example in training_examples]
     training_examples = [[example[0],example[1]] for example in training_examples]
-    layer_sizes = [3,6,2,1,1]
+    layer_sizes = [3,5,2,1,1]
     alpha = 0.1
     epochs = 10000
     min_error =10000
