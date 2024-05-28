@@ -1,6 +1,10 @@
 import sys; args = sys.argv[1:]
 import math
 import re
+# args= ['G16W2', 'V1R']
+# args = ['GG10','V6R']
+# args = ['GG21R11','V20R']
+# args = ['G30W5', 'V13::5B', 'V27R17', 'V14R18']
 def parseCommaSplices(esplits,graph_ds):
     size_list  = [i for i in range(int(graph_ds[1]))]
     vertices = []
@@ -532,50 +536,6 @@ def grfStrProps(graph):
         if 'rwd' in graph[3][key]:
             res+='\n'+f"({key[0]},{key[1]}):rwd:{graph[3][key]['rwd']}"
     return res
-def BFS(graph,v,north_south_east_west_lookup):
-    if grfVProps(graph,v) != {}: return [v],[]
-    parseMe = [v]
-    dctSeen = {v:''}
-    visited_edges = []
-    while parseMe:
-        node = parseMe.pop(0)
-        for nbr in grfNbrs(graph,node):
-            if nbr not in dctSeen:
-                visited_edges.append((node,nbr))
-                if grfVProps(graph,nbr) != {} or grfEProps(graph,node,nbr) != {}:
-                    dctSeen[nbr] = node
-                    
-                    return reconstruct_path(v,nbr,dctSeen,north_south_east_west_lookup)
-                    # return dctSeen,nbr
-                dctSeen[nbr] = node
-                parseMe.append(nbr)
-            else:
-                '''
-                check if ive visited the edge before
-
-                '''
-                if (node,nbr) not in visited_edges:
-                    visited_edges.append((node,nbr))
-                    if grfEProps(graph,node,nbr) != {}:
-                    
-                        r = reconstruct_path(v,nbr,dctSeen,north_south_east_west_lookup)
-                        return r[0] + [node] +[nbr], r[1]
-                        # return dctSeen,nbr
-    return -1
-def reconstruct_path(start,goal,dctSeen,north_south_east_west_lookup):
-    jumps = []
-    path_list = [goal]
-    temp=goal
-    while temp!=start:
-        if temp in dctSeen:
-        
-            if dctSeen[temp] not in north_south_east_west_lookup[temp]:
-                jumps.append(f"{dctSeen[temp]}~{temp}")
-            temp=dctSeen[temp]
-            path_list.append(temp)
-        else:
-            return -1
-    return path_list, jumps
 def m(args):
     graph = grfParse(args)
     # print(graph)
@@ -595,139 +555,156 @@ def m(args):
         print('\n'.join(representation[i:i+graph[0][2]] for i in range(0,graph[0][1],graph[0][2])))
         
     print(grfStrProps(graph))
-def m2(args):
-    graph = grfParse(args)
-    # print(graph)
-    symbol_dict = {'E':'E','W':'W','N':'N','S':'S','EN':'L','WN':'J','WSN':'<','WS':'7','EWN':'^','EWSN':'+','EWS':'v','ES':'r','ESN':'>','':'.','EW':'-','SN':'|'}
-    jumps = []
-    res = ''
-    north_south_east_west_lookup  = {}
-    for i in range(graph[0][1]):
-        north_south_east_west_lookup[i] = []
-        if i-graph[0][2]>=0:
-            north_south_east_west_lookup[i].append(i-graph[0][2])
-        if i+graph[0][2]<graph[0][1]:
-            north_south_east_west_lookup[i].append(i+graph[0][2])
-        if i%graph[0][2]!=0:
-            north_south_east_west_lookup[i].append(i-1)
-        if i%graph[0][2]!=graph[0][2]-1:
-            north_south_east_west_lookup[i].append(i+1)
-    for i,nbrs in enumerate(graph[0][-2]):
-        
-        if grfVProps(graph,i) == {}:
-            nbr_paths = {}
-            for nbr in nbrs:
-                if grfEProps(graph,i,nbr) != {}:
-                    nbr_paths[nbr] = [nbr]
-                elif (b:=BFS(graph,nbr,north_south_east_west_lookup)) != -1:
-                    
-                    
-                    nbr_paths[nbr],t_jumps = b
-                    # print(i,nbr, nbr_paths[nbr])
-                    jumps+=t_jumps
+def edgeNbrVal(vtx,n,graph_ds,valuations):
+    vertices_list = graph_ds[-3]
+    vProps = graph_ds[2]
+    eProps = graph_ds[3]
 
-            if nbr_paths=={}:
-                res+='.'
-            else:
-                symbol = ''
-                min_path_len = min(len(path) for path in nbr_paths.values())
-                for nbr in nbr_paths:
-                    
-                    if len(nbr_paths[nbr])==min_path_len:
-                        if nbr not in north_south_east_west_lookup[i]:
-                            jumps.append(f"{i}~{nbr}")
-                        if nbr == i+1 and nbr in north_south_east_west_lookup[i]:
-                            symbol+='E'
-                        if nbr == i-1 and nbr in north_south_east_west_lookup[i]:
-                            symbol+='W'
-                        if nbr == i+graph[0][2] and nbr in north_south_east_west_lookup[i]:
-                            symbol+='S'
-                        if nbr == i-graph[0][2] and nbr in north_south_east_west_lookup[i]:
-                            symbol+='N'
-                key = ''
-                if 'E' in symbol:
-                    key+='E'
-                if 'W' in symbol:
-                    key+='W'
-                if 'S' in symbol:
-                    key+='S'
-                if 'N' in symbol:
-                    key+='N'
-                res+=symbol_dict[key]
+    if "rwd" in eProps[(vtx,n)]:
+        return eProps[(vtx,n)]['rwd']
+    if ""!=valuations[n]:
+        return valuations[n]
+    return 0
+def argmax(vtx,graph_ds,valuations):
+    # maxNV = max([valuations[n] for n in graph_ds[-3][vtx]])
+    maxNV = 0
+    for n in graph_ds[-3][vtx]:
+        if valuations[n]!="" and valuations[n]>maxNV:
+            maxNV = valuations[n]
+    for edge in graph_ds[3]:
+        if edge[0] == vtx and 'rwd' in graph_ds[3][edge]:
+            if graph_ds[3][edge]['rwd']>maxNV:
+                maxNV = graph_ds[3][edge]['rwd']
+
+    return [n for n in graph_ds[-3][vtx] if ""!=valuations[n]==maxNV or ('rwd 'in graph_ds[3][(vtx,n)] and graph_ds[3][(vtx,n)]['rwd']==maxNV)] 
+    # return [n for n in graph_ds[-3][vtx] if ""!=valuations[n]==maxNV]
+def maxDiff(new_valuations,old_valuations):
+    maxDiffVals=[]
+    # print(new_valuations,old_valuations)
+    for i in range(len(new_valuations)):
+        if new_valuations[i]==old_valuations[i]: continue
+        elif not old_valuations[i]: maxDiffVals.append(abs(new_valuations[i]))
         else:
-            res+='*'
-    res = '\n'.join(res[i:i+graph[0][2]] for i in range(0,graph[0][1],graph[0][2]))
-    print("Policy: ")
-    print(res)
-    print(';'.join(set(jumps)))
-def main():
-    graph = grfParse(args)
-    # print(graph)
-    symbol_dict = {'E':'E','W':'W','N':'N','S':'S','EN':'L','WN':'J','WSN':'<','WS':'7','EWN':'^','EWSN':'+','EWS':'v','ES':'r','ESN':'>','':'.','EW':'-','SN':'|'}
-    jumps = []
-    res = ''
-    north_south_east_west_lookup  = {}
-    for i in range(graph[0][1]):
-        north_south_east_west_lookup[i] = []
-        if i-graph[0][2]>=0:
-            north_south_east_west_lookup[i].append(i-graph[0][2])
-        if i+graph[0][2]<graph[0][1]:
-            north_south_east_west_lookup[i].append(i+graph[0][2])
-        if i%graph[0][2]!=0:
-            north_south_east_west_lookup[i].append(i-1)
-        if i%graph[0][2]!=graph[0][2]-1:
-            north_south_east_west_lookup[i].append(i+1)
-    
-    for i,nbrs in enumerate(graph[0][-2]):
-        
-        if grfVProps(graph,i) == {}:
-            nbr_paths = {}
-            for nbr in nbrs:
-                if grfEProps(graph,i,nbr) != {}:
-                    nbr_paths[nbr] = [nbr]
-                elif (b:=BFS(graph,nbr,north_south_east_west_lookup)) != -1:
-                    
-                    
-                    nbr_paths[nbr],t_jumps = b
-                    # print(i,nbr, nbr_paths[nbr])
-                    jumps+=t_jumps
-            if nbr_paths=={}:
-                res+='.'
-            else:
-                symbol = ''
-                min_path_len = min(len(path) for path in nbr_paths.values())
-                for nbr in nbr_paths:
-                    
-                    if len(nbr_paths[nbr])==min_path_len:
-                        if nbr not in north_south_east_west_lookup[i]:
-                            jumps.append(f"{i}~{nbr}")
-                        if nbr == i+1 and nbr in north_south_east_west_lookup[i]:
-                            symbol+='E'
-                        if nbr == i-1 and nbr in north_south_east_west_lookup[i]:
-                            symbol+='W'
-                        if nbr == i+graph[0][2] and nbr in north_south_east_west_lookup[i]:
-                            symbol+='S'
-                        if nbr == i-graph[0][2] and nbr in north_south_east_west_lookup[i]:
-                            symbol+='N'
-                key = ''
-                if 'E' in symbol:
-                    key+='E'
-                if 'W' in symbol:
-                    key+='W'
-                if 'S' in symbol:
-                    key+='S'
-                if 'N' in symbol:
-                    key+='N'
-                res+=symbol_dict[key]
-        else:
-            res+='*'
-    res = '\n'.join(res[i:i+graph[0][2]] for i in range(0,graph[0][1],graph[0][2]))
-    print("Policy: ")
-    print(res)
-    print(';'.join(set(jumps)))
+            maxDiffVals.append(abs(new_valuations[i]-old_valuations[i]))
+    if maxDiffVals==[]:
+        return 0
+    return max(maxDiffVals)
+def valuedPolicy(v,policy,valuations,graph):
+    # print(v,policy,valuations)
+    # return [n for n in policy[v] if valuations[n]!=""] 
+    return list(set([n for n in policy[v] if valuations[n]!=""] + [n for n in policy[v] if 'rwd' in graph[3][(v,n)]]))
+
+def grfValuePolicy(graph,policy,gamma):
+    vertices_list = graph[-3]
+    valuations = ["" for i in range(len(graph[-3]))]
+    for v in graph[2]:
+        valuations[v] = graph[2][v]['rwd']
+    old_valuations = valuations+[0]
+    old_valuations = old_valuations[:-1]
+    new_valuations = valuations
+    # for v in range(len(vertices_list)):
+    #      if v not in graph[2]:
+    #          if not (pn:=valuedPolicy(v,policy,old_valuations)):
+    #              continue
+    #          if gamma>0.5:
+    #              new_valuations[v] = sum([edgeNbrVal(v,n,graph,old_valuations) for n in pn])/len(pn) * gamma
+    #          else:
+    #              new_valuations[v] = sum([edgeNbrVal(v,n,graph,old_valuations) for n in pn])/len(pn) - gamma
+    count = 0
+    while maxDiff(new_valuations,old_valuations)>0.001 or count==0:
+        old_valuations = new_valuations+[0]
+        old_valuations = old_valuations[:-1]
+        for v in range(len(vertices_list)):
+            # print(v,graph[2])
+            if v not in graph[2]:
+                if not (pn:=valuedPolicy(v,policy,old_valuations,graph)):
+                    continue
+                if gamma>0.5:
+                    new_valuations[v] = sum([edgeNbrVal(v,n,graph,old_valuations) for n in pn])/len(pn) * gamma
+                else:
+                    new_valuations[v] = sum([edgeNbrVal(v,n,graph,old_valuations) for n in pn])/len(pn) - gamma
+        count+=1
             
+    # print(new_valuations)
+    return new_valuations
+    
+def grfPolicyFromValuation(graph,valuations):
+    policy = [[] for j in range(len(graph[-3]))]
+    for vtx,value in enumerate(valuations):
+        if value=="" or vtx in graph[2]: continue
+        policy[vtx] = argmax(vtx,graph,valuations)
+    return policy
+def grfFindOptimalPolicy(graph):
+    valuations = ["" for i in range(len(graph[-3]))]
+    for v in graph[2]:
+        valuations[v] = graph[2][v]['rwd']
+    policy = graph[-3]
+    for v in graph[2]:
+        policy[v] = []
+    priorPolicy = [[] for j in range(len(graph[-3]))]
+    # count = 0
+    while priorPolicy!=policy:
+        valuations = grfValuePolicy(graph,policy,0.99)
+        # print(valuations)
+        priorPolicy = policy
+        policy = grfPolicyFromValuation(graph,valuations)
+    return policy
+def main():
+
+    symbol_dict = {'E':'E','W':'W','N':'N','S':'S','EN':'L','WN':'J','WSN':'<','WS':'7','EWN':'^','EWSN':'+','EWS':'v','ES':'r','ESN':'>','':'.','EW':'-','SN':'|'}
+    graph = grfParse(args)
+    # print(graph[2])
+    # print(graph)
+    size = grfSize(graph)
+    properties = grfGProps(graph)
+    representation  = grfStrEdges(graph)
+    # print(grfNbrs(graph,1))
+    print("Graph:")
+    jumps = ''
+    if 'Jumps' in representation:
+        jumps = representation[representation.index('Jumps'):]
+        representation = representation[:representation.index('Jumps')]
+    if jumps:
+        print('\n'.join(representation[i:i+graph[0][2]] for i in range(0,graph[0][1],graph[0][2])))
+        print(jumps)
+    elif representation:
+        print('\n'.join(representation[i:i+graph[0][2]] for i in range(0,graph[0][1],graph[0][2])))
+        
+    print(grfStrProps(graph))
+    # print(graph[0])
+    # print(graph[1])
+    # print(graph[2])
+    # print(graph[3])
     # print(graph[1][17])
-
+    if graph[0][0] != 'N' and graph[0][2]!=0:
+        policy = grfFindOptimalPolicy(graph)
+        # print(policy)
+        print("Optimal Policy:")
+        optimal_policy = ""
+        for i in range(len(policy)):
+                symbol=""
+                if i in graph[2]:
+                    optimal_policy+='*'
+                    continue
+                if i+1 in policy[i] and i%graph[0][2]!=graph[0][2]-1:
+                # print('E added')
+                    symbol+='E'
+                if i-1 in policy[i] and i%graph[0][2]!=0:
+                    symbol+='W'
+                if i+graph[0][2] in policy[i]:
+                    # print('S added')
+                    symbol+='S'
+                if i-graph[0][2] in policy[i]:
+                    symbol+='N'
+                optimal_policy+=symbol_dict[symbol]
+        print('\n'.join(optimal_policy[i:i+graph[0][2]] for i in range(0,graph[0][1],graph[0][2])))
+        valuations = ["" for i in range(len(graph[-3]))]
+        for v in graph[2]:
+            valuations[v] = graph[2][v]['rwd']
+        valuations = grfValuePolicy(graph,policy,0.99)
+        valuations = [str(round(val,5))  if val!="" else val for val in valuations]
+        print('Valuation:')
+        splits = [valuations[i:i+graph[0][2]] for i in range(0,graph[0][1],graph[0][2])]
+        print('\n'.join([' '.join(split) for split in splits]))
 if __name__ == '__main__': main()
-
-#Shaurya Jain, pd 3, 2023
+#Shaurya Jain, pd 3, 2025
