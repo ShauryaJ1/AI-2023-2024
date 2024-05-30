@@ -1,0 +1,24 @@
+1. For each spot where there can be a word
+Make a dictionary where the spot, which is a tuple prob, point to a set or list or whatever that contains the possible words that can go there
+(length, index, orientation, )
+
+2.
+Then you run bFS on this similar to sudoku
+u choose the spot that has the least amount of possible words that can go there
+and then u just try every word
+and u know something is invalid when
+your board isn't technically done, like your dictionary still has "unfinished" spots
+yet the length of say the set of possible words that can go in that spot is 0
+
+
+which means u have a non-word that's been filled in that column or row
+
+
+oxley leads to a branch that is doomed to fail
+
+power - > oxley -> exams/exact -> leads to a branch that is doomed to fail
+lower - > oxley -> exams/exact -> leads to a branch that is doomed to fail
+
+code is slow
+
+code also comes across situations where it cant find a word because bad crossword structure(avail- scenario)
